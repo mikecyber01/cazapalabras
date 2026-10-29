@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CAZAPALABRAS - Juego Educativo Infantil</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['"Fredoka One"', 'cursive'],
+                        quicksand: ['"Quicksand"', 'sans-serif'],
+                    },
+                    colors: {
+                        brandYellow: '#FFD166',
+                        brandPink: '#EF476F',
+                        brandGreen: '#06D6A0',
+                        brandBlue: '#118AB2',
+                        brandPurple: '#8338EC'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #a8edd9 0%, #fed6e3 100%);
+            touch-action: manipulation;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .sticker-card {
+            background: white;
+            border: 6px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15), 0 0 0 4px #e2e8f0;
+            border-radius: 2rem;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .sticker-img {
+            filter: drop-shadow(0px 8px 0px rgba(0, 0, 0, 0.15));
+            transition: transform 0.3s ease;
+        }
+
+        .sticker-btn {
+            box-shadow: 0 6px 0px 0px rgba(0,0,0,0.2), inset 0 2px 0px rgba(255,255,255,0.5);
+            transition: all 0.1s ease;
+            cursor: pointer;
+        }
+
+        .sticker-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px 0px rgba(0,0,0,0.2);
+        }
+
+        /* Falling letter bubble */
+        .letter-bubble {
+            position: absolute;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.2rem;
+            color: #ffffff;
+            border: 4px solid #ffffff;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255,255,255,0.6);
+            cursor: pointer;
+            z-index: 40;
+            touch-action: none;
+            will-change: transform, top;
+            transition: background-color 0.15s, transform 0.1s;
+        }
+
+        .letter-bubble:hover {
+            transform: scale(1.1);
+        }
+
+        .letter-slot {
+            width: 48px;
+            height: 56px;
+            border: 3px dashed #94a3b8;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.8rem;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 640px) {
+            .letter-slot {
+                width: 58px;
+                height: 68px;
+                font-size: 2.3rem;
+            }
+            .letter-bubble {
+                width: 76px;
+                height: 76px;
+                font-size: 2.6rem;
+            }
+        }
+
+        .letter-slot.filled {
+            border-style: solid;
+            border-color: #06D6A0;
+            background: #06D6A0;
+            color: white;
+            box-shadow: 0 6px 12px rgba(6, 214, 160, 0.4);
+            animation: slotPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slotPop {
+            0% { transform: scale(0.5); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes floatAnim {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+
+        .animate-float {
+            animation: floatAnim 3s ease-in-out infinite;
+        }
+
+        /* Keyboard key helper */
+        .key-btn {
+            background: white;
+            border: 2px solid #cbd5e1;
+            box-shadow: 0 4px 0 #94a3b8;
+            font-family: 'Fredoka One', cursive;
+            transition: all 0.08s ease;
+        }
+        .key-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between items-center p-2 sm:p-4 select-none relative">
+
+    <!-- Header / Nav -->
+    <header class="w-full max-w-4xl flex justify-between items-center bg-white/90 backdrop-blur-md px-3 py-2 rounded-3xl shadow-lg border-2 border-white z-50">
+        <div class="flex items-center gap-2">
+            <button id="homeBtn" onclick="goToHome()" class="sticker-btn bg-brandPink text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl font-fredoka flex items-center gap-1.5 text-xs sm:text-base">
+                <i class="fa-solid fa-house"></i>
+                <span>Inicio</span>
+            </button>
+            <button id="soundToggleBtn" onclick="toggleMute()" class="sticker-btn bg-brandYellow text-slate-800 px-3 py-1.5 sm:px-3 sm:py-2 rounded-2xl font-fredoka text-xs sm:text-base">
+                <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Score Counter -->
+            <div class="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-2xl border-2 border-yellow-300">
+                <span class="text-xl sm:text-2xl">⭐</span>
+                <span id="scoreText" class="font-fredoka text-lg sm:text-xl text-yellow-700">0</span>
+            </div>
+
+            <!-- Current Selected Language Indicator -->
+            <button onclick="openLangModal()" class="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-2xl border-2 border-slate-200 hover:bg-slate-200">
+                <span id="currentLangFlag" class="text-xl sm:text-2xl">🇪🇸</span>
+                <i class="fa-solid fa-caret-down text-slate-500 text-xs"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN GAME WORKSPACE -->
+    <main id="mainContainer" class="w-full max-w-4xl flex-1 flex flex-col items-center justify-center relative my-1 sm:my-2 overflow-hidden">
+
+        <!-- ================= PAGE 1: LANGUAGE SELECTION ================= -->
+        <div id="screenLanguage" class="w-full max-w-xl flex flex-col items-center text-center space-y-4 sm:space-y-6 z-10 my-auto">
+            <div class="animate-float">
+                <h1 class="font-fredoka text-4xl sm:text-6xl text-brandPink drop-shadow-md tracking-wider">
+                    CAZAPALABRAS 🔤
+                </h1>
+                <p class="text-slate-700 font-bold text-base sm:text-lg mt-1">¡Caza las letras y forma la palabra!</p>
+            </div>
+
+            <div class="sticker-card p-5 sm:p-6 w-full bg-white/95">
+                <h2 class="font-fredoka text-xl sm:text-2xl text-slate-700 mb-4">Elige tu idioma / Choose language:</h2>
+                
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <!-- Spanish -->
+                    <button onclick="selectLanguage('es')" class="sticker-btn bg-red-500 hover:bg-red-600 text-white p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
+                        <span class="text-3xl sm:text-4xl">🇪🇸</span>
+                        <span class="font-fredoka text-base sm:text-lg">Español</span>
+                    </button>
+
+                    <!-- English -->
+                    <button onclick="selectLanguage('en')" class="sticker-btn bg-blue-600 hover:bg-blue-700 text-white p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
+                        <span class="text-3xl sm:text-4xl">🇬🇧</span>
+                        <span class="font-fredoka text-base sm:text-lg">English</span>
+                    </button>
+
+                    <!-- Valenciano -->
+                    <button onclick="selectLanguage('va')" class="sticker-btn bg-yellow-400 hover:bg-yellow-500 text-slate-900 p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
+                        <div class="w-10 h-7 rounded overflow-hidden shadow border border-white flex relative">
+                            <div class="h-full w-full bg-yellow-400 flex flex-col justify-between">
+                                <div class="h-1 bg-red-600"></div>
+                                <div class="h-1 bg-red-600"></div>
+                                <div class="h-1 bg-red-600"></div>
+                                <div class="h-1 bg-red-600"></div>
+                            </div>
+                            <div class="absolute left-0 top-0 bottom-0 w-2.5 bg-blue-600 flex items-center justify-center">
+                                <span class="text-[6px]">👑</span>
+                            </div>
+                        </div>
+                        <span class="font-fredoka text-base sm:text-lg">Valencià</span>
+                    </button>
+
+                    <!-- Catalan -->
+                    <button onclick="selectLanguage('ca')" class="sticker-btn bg-amber-400 hover:bg-amber-500 text-slate-900 p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
+                        <div class="w-10 h-7 rounded overflow-hidden shadow border border-white flex flex-col justify-between bg-yellow-400">
+                            <div class="h-1 bg-red-600"></div>
+                            <div class="h-1 bg-red-600"></div>
+                            <div class="h-1 bg-red-600"></div>
+                            <div class="h-1 bg-red-600"></div>
+                        </div>
+                        <span class="font-fredoka text-base sm:text-lg">Català</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PAGE 2: LEVEL SELECTION ================= -->
+        <div id="screenLevel" class="hidden w-full max-w-xl flex flex-col items-center text-center space-y-4 sm:space-y-6 z-10 my-auto">
+            <h2 class="font-fredoka text-3xl sm:text-5xl text-brandBlue drop-shadow-sm">
+                Selecciona Nivel 🎯
+            </h2>
+
+            <div class="w-full space-y-3 sm:space-y-4">
+                <!-- Level 1 -->
+                <button onclick="startGame(1)" class="sticker-btn w-full bg-brandGreen text-white p-4 sm:p-5 rounded-3xl flex items-center justify-between text-left">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <div class="bg-white/30 text-2xl sm:text-3xl p-2.5 sm:p-3 rounded-2xl">🌱</div>
+                        <div>
+                            <div class="font-fredoka text-xl sm:text-2xl" id="lvl1Title">Nivel 1: Cortas</div>
+                            <div class="text-xs sm:text-sm opacity-90 font-semibold" id="lvl1Desc">3 - 4 letras (5-6 años)</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xl"></i>
+                </button>
+
+                <!-- Level 2 -->
+                <button onclick="startGame(2)" class="sticker-btn w-full bg-brandYellow text-slate-900 p-4 sm:p-5 rounded-3xl flex items-center justify-between text-left">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <div class="bg-white/40 text-2xl sm:text-3xl p-2.5 sm:p-3 rounded-2xl">⭐</div>
+                        <div>
+                            <div class="font-fredoka text-xl sm:text-2xl" id="lvl2Title">Nivel 2: Medias</div>
+                            <div class="text-xs sm:text-sm opacity-90 font-semibold" id="lvl2Desc">5 - 6 letras (7-8 años)</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xl"></i>
+                </button>
+
+                <!-- Level 3 -->
+                <button onclick="startGame(3)" class="sticker-btn w-full bg-brandPurple text-white p-4 sm:p-5 rounded-3xl flex items-center justify-between text-left">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <div class="bg-white/30 text-2xl sm:text-3xl p-2.5 sm:p-3 rounded-2xl">🚀</div>
+                        <div>
+                            <div class="font-fredoka text-xl sm:text-2xl" id="lvl3Title">Nivel 3: Largas</div>
+                            <div class="text-xs sm:text-sm opacity-90 font-semibold" id="lvl3Desc">7+ letras (9-10 años)</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= PAGE 3: GAMEPLAY SCREEN ================= -->
+        <div id="screenGame" class="hidden w-full h-full flex flex-col justify-between items-center relative overflow-hidden">
+
+            <!-- Progress Header -->
+            <div class="w-full max-w-xl bg-white/95 rounded-2xl px-3 py-2 shadow-md border-2 border-white flex flex-col gap-1.5 z-30">
+                <div class="flex justify-between items-center font-fredoka text-xs sm:text-sm text-slate-700">
+                    <span id="wordProgressText">Palabra 1 de 5</span>
+                    <button onclick="repeatSpeech()" class="bg-brandBlue text-white px-3 py-1 rounded-xl text-xs flex items-center gap-1.5 hover:bg-blue-600 active:scale-95">
+                        <i class="fa-solid fa-volume-high"></i> Escuchar palabra
+                    </button>
+                </div>
+                <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-brandGreen h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Sticker Image Box -->
+            <div class="z-20 my-1 sm:my-2 flex flex-col items-center">
+                <div class="sticker-card p-3 sm:p-5 bg-white flex flex-col items-center justify-center min-w-[150px] min-h-[150px] sm:min-w-[200px] sm:min-h-[200px]">
+                    <span id="wordEmoji" class="text-6xl sm:text-8xl sticker-img select-none">🐶</span>
+                    <p id="wordHintText" class="font-fredoka text-lg sm:text-2xl text-slate-700 mt-1 tracking-widest capitalize"></p>
+                </div>
+            </div>
+
+            <!-- Slots container for letters -->
+            <div class="z-30 my-1 flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-full px-2" id="slotsContainer">
+                <!-- Slots inserted dynamically -->
+            </div>
+
+            <!-- Interactive On-Screen Quick Letters Bar (For touch or easy pick) -->
+            <div class="z-30 w-full max-w-2xl px-2 pb-1">
+                <div class="text-center font-fredoka text-xs text-slate-600 mb-1">
+                    💡 Toca las letras cayendo o presiona en tu teclado
+                </div>
+                <div id="quickKeypad" class="flex flex-wrap justify-center gap-1">
+                    <!-- Quick key buttons auto-generated for current word -->
+                </div>
+            </div>
+
+            <!-- Falling letter layer -->
+            <div id="fallingArea" class="absolute inset-0 z-20 pointer-events-auto">
+                <!-- Bubbles appended here -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Language Selector -->
+    <div id="langModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-5 max-w-sm w-full text-center shadow-2xl border-4 border-white space-y-4">
+            <h3 class="font-fredoka text-2xl text-slate-800">Cambiar Idioma</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="changeLanguageAndClose('es')" class="p-3 bg-slate-100 hover:bg-red-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
+                    <span>🇪🇸</span> Español
+                </button>
+                <button onclick="changeLanguageAndClose('en')" class="p-3 bg-slate-100 hover:bg-blue-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
+                    <span>🇬🇧</span> English
+                </button>
+                <button onclick="changeLanguageAndClose('va')" class="p-3 bg-slate-100 hover:bg-yellow-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
+                    <span>👑</span> Valencià
+                </button>
+                <button onclick="changeLanguageAndClose('ca')" class="p-3 bg-slate-100 hover:bg-amber-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
+                    <span>💛</span> Català
+                </button>
+            </div>
+            <button onclick="closeLangModal()" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 font-fredoka text-slate-700 rounded-xl">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Victory Round -->
+    <div id="victoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="sticker-card bg-white p-6 sm:p-8 max-w-md w-full text-center space-y-5">
+            <div class="text-6xl sm:text-7xl animate-bounce">🏆</div>
+            <h2 class="font-fredoka text-3xl sm:text-4xl text-brandYellow drop-shadow">¡GENIAL!</h2>
+            <p class="font-quicksand font-bold text-slate-600 text-base sm:text-lg">¡Has completado todas las palabras!</p>
+            
+            <div class="flex justify-center items-center gap-2 text-2xl sm:text-3xl font-fredoka text-slate-800 bg-yellow-100 py-2 rounded-2xl border-2 border-yellow-300">
+                <span>⭐</span>
+                <span id="finalScore">0</span>
+                <span>Puntos</span>
+            </div>
+
+            <div class="flex flex-col gap-2.5">
+                <button onclick="replayGame()" class="sticker-btn w-full bg-brandGreen text-white font-fredoka py-3.5 rounded-2xl text-lg sm:text-xl">
+                    ¡Jugar de nuevo! 🔄
+                </button>
+                <button onclick="goToLevelSelect()" class="sticker-btn w-full bg-brandBlue text-white font-fredoka py-3 rounded-2xl text-base sm:text-lg">
+                    Elegir otro nivel 🎯
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /* ================= WORD DATABASE ================= */
+        const WORD_DATABASE = {
+            es: {
+                level1: [
+                    { word: "SOL", emoji: "☀️" },
+                    { word: "PEZ", emoji: "🐟" },
+                    { word: "OSO", emoji: "🐻" },
+                    { word: "PAN", emoji: "🍞" },
+                    { word: "UVA", emoji: "🍇" },
+                    { word: "VACA", emoji: "🐮" },
+                    { word: "GATO", emoji: "🐱" },
+                    { word: "PATO", emoji: "🦆" },
+                    { word: "LEON", emoji: "🦁" },
+                    { word: "LUNA", emoji: "🌙" },
+                    { word: "CASA", emoji: "🏠" },
+                    { word: "BHO", emoji: "🦉" }
+                ],
+                level2: [
+                    { word: "PERRO", emoji: "🐶" },
+                    { word: "RATON", emoji: "🐭" },
+                    { word: "TIGRE", emoji: "🐯" },
+                    { word: "ZEBRA", emoji: "🦓" },
+                    { word: "CERDO", emoji: "🐷" },
+                    { word: "ZORRO", emoji: "🦊" },
+                    { word: "OVEJA", emoji: "🐑" },
+                    { word: "MONO", emoji: "🐒" },
+                    { word: "LIBRO", emoji: "📖" },
+                    { word: "AVION", emoji: "✈️" },
+                    { word: "FLOR", emoji: "🌺" },
+                    { word: "COCHE", emoji: "🚗" }
+                ],
+                level3: [
+                    { word: "ELEFANTE", emoji: "🐘" },
+                    { word: "SERPIENTE", emoji: "🐍" },
+                    { word: "MARIPOSA", emoji: "🦋" },
+                    { word: "COCODRILO", emoji: "🐊" },
+                    { word: "DINOSAURIO", emoji: "🦕" },
+                    { word: "FLAMENCO", emoji: "🦩" },
+                    { word: "ARDILLA", emoji: "🐿️" },
+                    { word: "PINGUINO", emoji: "🐧" },
+                    { word: "TORTUGA", emoji: "🐢" },
+                    { word: "BICICLETA", emoji: "🚲" },
+                    { word: "GUITARRA", emoji: "🎸" }
+                ]
+            },
+            en: {
+                level1: [
+                    { word: "CAT", emoji: "🐱" },
+                    { word: "DOG", emoji: "🐶" },
+                    { word: "SUN", emoji: "☀️" },
+                    { word: "PIG", emoji: "🐷" },
+                    { word: "FOX", emoji: "🦊" },
+                    { word: "COW", emoji: "🐮" },
+                    { word: "DUCK", emoji: "🦆" },
+                    { word: "FISH", emoji: "🐟" },
+                    { word: "BIRD", emoji: "🐦" },
+                    { word: "BEAR", emoji: "🐻" },
+                    { word: "FROG", emoji: "🐸" }
+                ],
+                level2: [
+                    { word: "TIGER", emoji: "🐯" },
+                    { word: "ZEBRA", emoji: "🦓" },
+                    { word: "SHEEP", emoji: "🐑" },
+                    { word: "HORSE", emoji: "🐴" },
+                    { word: "SNAKE", emoji: "🐍" },
+                    { word: "MOUSE", emoji: "🐭" },
+                    { word: "APPLE", emoji: "🍎" },
+                    { word: "HOUSE", emoji: "🏠" },
+                    { word: "TRAIN", emoji: "🚆" },
+                    { word: "MONKEY", emoji: "🐒" }
+                ],
+                level3: [
+                    { word: "ELEPHANT", emoji: "🐘" },
+                    { word: "BUTTERFLY", emoji: "🦋" },
+                    { word: "CROCODILE", emoji: "🐊" },
+                    { word: "DINOSAUR", emoji: "🦕" },
+                    { word: "FLAMINGO", emoji: "🦩" },
+                    { word: "SQUIRREL", emoji: "🐿️" },
+                    { word: "PENGUIN", emoji: "🐧" },
+                    { word: "TURTLE", emoji: "🐢" },
+                    { word: "BICYCLE", emoji: "🚲" },
+                    { word: "DOLPHIN", emoji: "🐬" }
+                ]
+            },
+            va: {
+                level1: [
+                    { word: "SOL", emoji: "☀️" },
+                    { word: "PA", emoji: "🍞" },
+                    { word: "GAT", emoji: "🐱" },
+                    { word: "GOS", emoji: "🐶" },
+                    { word: "OS", emoji: "🐻" },
+                    { word: "UVA", emoji: "🍇" },
+                    { word: "RATA", emoji: "🐀" },
+                    { word: "CASA", emoji: "🏠" },
+                    { word: "PATO", emoji: "🦆" },
+                    { word: "LLEO", emoji: "🦁" }
+                ],
+                level2: [
+                    { word: "TIGRE", emoji: "🐯" },
+                    { word: "PORC", emoji: "🐷" },
+                    { word: "CORB", emoji: "🦅" },
+                    { word: "VACA", emoji: "🐮" },
+                    { word: "OCELL", emoji: "🐦" },
+                    { word: "PEIX", emoji: "🐟" },
+                    { word: "LLIBRE", emoji: "📖" },
+                    { word: "AVIO", emoji: "✈️" },
+                    { word: "FLOR", emoji: "🌺" },
+                    { word: "MONO", emoji: "🐒" }
+                ],
+                level3: [
+                    { word: "ELEFANT", emoji: "🐘" },
+                    { word: "SERPENT", emoji: "🐍" },
+                    { word: "PAPALLONA", emoji: "🦋" },
+                    { word: "COCODRIL", emoji: "🐊" },
+                    { word: "DINOSAURE", emoji: "🦕" },
+                    { word: "FLAMENC", emoji: "🦩" },
+                    { word: "ESQUIROL", emoji: "🐿️" },
+                    { word: "PINGUI", emoji: "🐧" },
+                    { word: "TORTUGA", emoji: "🐢" },
+                    { word: "BICICLETA", emoji: "🚲" }
+                ]
+            },
+            ca: {
+                level1: [
+                    { word: "SOL", emoji: "☀️" },
+                    { word: "PA", emoji: "🍞" },
+                    { word: "GAT", emoji: "🐱" },
+                    { word: "GOS", emoji: "🐶" },
+                    { word: "OS", emoji: "🐻" },
+                    { word: "UVA", emoji: "🍇" },
+                    { word: "RATA", emoji: "🐀" },
+                    { word: "CASA", emoji: "🏠" },
+                    { word: "LLUNA", emoji: "🌙" },
+                    { word: "LLEO", emoji: "🦁" }
+                ],
+                level2: [
+                    { word: "TIGRE", emoji: "🐯" },
+                    { word: "PORC", emoji: "🐷" },
+                    { word: "ROSA", emoji: "🌹" },
+                    { word: "OCELL", emoji: "🐦" },
+                    { word: "PEIX", emoji: "🐟" },
+                    { word: "LLIBRE", emoji: "📖" },
+                    { word: "AVIO", emoji: "✈️" },
+                    { word: "FLOR", emoji: "🌺" },
+                    { word: "MONO", emoji: "🐒" },
+                    { word: "COTXE", emoji: "🚗" }
+                ],
+                level3: [
+                    { word: "ELEFANT", emoji: "🐘" },
+                    { word: "SERPENT", emoji: "🐍" },
+                    { word: "PAPALLONA", emoji: "🦋" },
+                    { word: "COCODRIL", emoji: "🐊" },
+                    { word: "DINOSAURE", emoji: "🦕" },
+                    { word: "FLAMENC", emoji: "🦩" },
+                    { word: "ESQUIROL", emoji: "🐿️" },
+                    { word: "PINGUI", emoji: "🐧" },
+                    { word: "TORTUGA", emoji: "🐢" },
+                    { word: "BICICLETA", emoji: "🚲" }
+                ]
+            }
+        };
+
+        const LANG_FLAGS = { es: "🇪🇸", en: "🇬🇧", va: "👑", ca: "💛" };
+        const LANG_CODES_TTS = { es: 'es-ES', en: 'en-US', va: 'ca-ES', ca: 'ca-ES' };
+
+        /* ================= GAME STATE ================= */
+        let currentLang = 'es';
+        let currentLevel = 1;
+        let gameWords = [];
+        let wordIndex = 0;
+        let currentWordObj = null;
+        let targetWord = "";
+        let collectedLetters = [];
+        let score = 0;
+        let isMuted = false;
+        let gameActive = false;
+        let activeBubbles = [];
+        let animationFrameId = null;
+        let lastSpawnTime = 0;
+
+        /* Audio Synth Context */
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        /* ================= SOUND EFFECTS ================= */
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'error') {
+                    // Car Horn sound
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.setValueAtTime(175, now + 0.1);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'fanfare') {
+                    const notes = [440, 554.37, 659.25, 880];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = ctx.createOscillator();
+                        const noteGain = ctx.createGain();
+                        noteOsc.type = 'triangle';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        noteGain.gain.setValueAtTime(0.3, now + idx * 0.12);
+                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(ctx.destination);
+                        noteOsc.start(now + idx * 0.12);
+                        noteOsc.stop(now + idx * 0.12 + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        /* ================= TEXT TO SPEECH ================= */
+        function speakWord(text) {
+            if (isMuted || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = LANG_CODES_TTS[currentLang] || 'es-ES';
+                utterance.rate = 0.85;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.log("TTS error", e);
+            }
+        }
+
+        function repeatSpeech() {
+            if (targetWord) speakWord(targetWord);
+        }
+
+        /* ================= UI NAVIGATION ================= */
+        function selectLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('currentLangFlag').innerText = LANG_FLAGS[lang];
+            showScreen('screenLevel');
+            updateLevelLabels();
+        }
+
+        function openLangModal() {
+            document.getElementById('langModal').classList.remove('hidden');
+        }
+
+        function closeLangModal() {
+            document.getElementById('langModal').classList.add('hidden');
+        }
+
+        function changeLanguageAndClose(lang) {
+            currentLang = lang;
+            document.getElementById('currentLangFlag').innerText = LANG_FLAGS[lang];
+            closeLangModal();
+            if (gameActive) {
+                startGame(currentLevel);
+            } else {
+                updateLevelLabels();
+            }
+        }
+
+        function updateLevelLabels() {
+            const translations = {
+                es: ["Nivel 1: Cortas", "Nivel 2: Medias", "Nivel 3: Largas"],
+                en: ["Level 1: Short", "Level 2: Medium", "Level 3: Long"],
+                va: ["Nivell 1: Curtetes", "Nivell 2: Mitjanes", "Nivell 3: Llargues"],
+                ca: ["Nivell 1: Curtetes", "Nivell 2: Mitjanes", "Nivell 3: Llargues"]
+            };
+
+            document.getElementById('lvl1Title').innerText = translations[currentLang][0];
+            document.getElementById('lvl2Title').innerText = translations[currentLang][1];
+            document.getElementById('lvl3Title').innerText = translations[currentLang][2];
+        }
+
+        function showScreen(screenId) {
+            ['screenLanguage', 'screenLevel', 'screenGame'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function goToHome() {
+            stopGame();
+            showScreen('screenLanguage');
+        }
+
+        function goToLevelSelect() {
+            stopGame();
+            document.getElementById('victoryModal').classList.add('hidden');
+            showScreen('screenLevel');
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const soundIcon = document.getElementById('soundIcon');
+            soundIcon.className = isMuted ? "fa-solid fa-volume-xmark text-red-500" : "fa-solid fa-volume-high";
+        }
+
+        /* ================= GAMEPLAY ENGINE ================= */
+        function startGame(level) {
+            getAudioContext();
+            currentLevel = level;
+            wordIndex = 0;
+            score = 0;
+            document.getElementById('scoreText').innerText = score;
+
+            const lvlKey = `level${level}`;
+            const availableWords = [...WORD_DATABASE[currentLang][lvlKey]];
+            gameWords = shuffleArray(availableWords).slice(0, 5);
+
+            showScreen('screenGame');
+            loadWord();
+        }
+
+        function loadWord() {
+            if (wordIndex >= gameWords.length) {
+                endRoundVictory();
+                return;
+            }
+
+            clearFallingBubbles();
+
+            currentWordObj = gameWords[wordIndex];
+            targetWord = currentWordObj.word.toUpperCase().replace(/[^A-Z]/g, '');
+            collectedLetters = [];
+
+            document.getElementById('wordEmoji').innerText = currentWordObj.emoji;
+            document.getElementById('wordHintText').innerText = targetWord;
+            document.getElementById('wordProgressText').innerText = `Palabra ${wordIndex + 1} de ${gameWords.length}`;
+            document.getElementById('progressBar').style.width = `${((wordIndex) / gameWords.length) * 100}%`;
+
+            // Build Slots
+            const slotsContainer = document.getElementById('slotsContainer');
+            slotsContainer.innerHTML = '';
+            for (let i = 0; i < targetWord.length; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'letter-slot';
+                slot.id = `slot-${i}`;
+                slotsContainer.appendChild(slot);
+            }
+
+            // Build Quick Keypad for alternative input
+            buildQuickKeypad();
+
+            speakWord(targetWord);
+
+            gameActive = true;
+            lastSpawnTime = Date.now();
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function buildQuickKeypad() {
+            const keypad = document.getElementById('quickKeypad');
+            keypad.innerHTML = '';
+            
+            // Unique letters from target + random extra letters
+            const targetChars = Array.from(new Set(targetWord.split('')));
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            while (targetChars.length < Math.min(8, targetWord.length + 4)) {
+                const randChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+                if (!targetChars.includes(randChar)) targetChars.push(randChar);
+            }
+            shuffleArray(targetChars);
+
+            targetChars.forEach(char => {
+                const btn = document.createElement('button');
+                btn.className = 'key-btn px-3 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-800 active:scale-90';
+                btn.innerText = char;
+                btn.onclick = () => catchLetter(char);
+                keypad.appendChild(btn);
+            });
+        }
+
+        function spawnFallingBubble() {
+            const area = document.getElementById('fallingArea');
+            if (!area) return;
+
+            const neededLetters = targetWord.split('').filter((char, idx) => collectedLetters[idx] !== char);
+            let letterToAssign = '';
+
+            if (neededLetters.length > 0 && Math.random() < 0.65) {
+                letterToAssign = neededLetters[Math.floor(Math.random() * neededLetters.length)];
+            } else {
+                const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                letterToAssign = alphabet[Math.floor(Math.random() * alphabet.length)];
+            }
+
+            const bubble = document.createElement('div');
+            bubble.className = 'letter-bubble';
+            bubble.innerText = letterToAssign;
+
+            // Positioning
+            const areaWidth = window.innerWidth;
+            const bubbleWidth = window.innerWidth > 640 ? 76 : 64;
+            const randomX = Math.max(10, Math.floor(Math.random() * (areaWidth - bubbleWidth - 20)));
+            
+            bubble.style.left = `${randomX}px`;
+            bubble.style.top = `-80px`;
+
+            const colors = ['#FFD166', '#EF476F', '#06D6A0', '#118AB2', '#8338EC'];
+            bubble.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+            // Multi-event click handler
+            const triggerCatch = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                catchLetter(letterToAssign, bubble);
+            };
+
+            bubble.addEventListener('pointerdown', triggerCatch);
+            bubble.addEventListener('click', triggerCatch);
+
+            area.appendChild(bubble);
+
+            activeBubbles.push({
+                element: bubble,
+                y: -80,
+                speed: 1.5 + (currentLevel * 0.4) + Math.random() * 0.8,
+                letter: letterToAssign
+            });
+        }
+
+        function gameLoop() {
+            if (!gameActive) return;
+
+            const now = Date.now();
+            // Spawn bubble periodically
+            const spawnInterval = Math.max(800, 1600 - (currentLevel * 200));
+            if (now - lastSpawnTime > spawnInterval) {
+                spawnFallingBubble();
+                lastSpawnTime = now;
+            }
+
+            // Move existing bubbles
+            const screenHeight = window.innerHeight;
+            for (let i = activeBubbles.length - 1; i >= 0; i--) {
+                const b = activeBubbles[i];
+                b.y += b.speed;
+                b.element.style.top = `${b.y}px`;
+
+                // Remove when fallen off screen
+                if (b.y > screenHeight - 120) {
+                    if (b.element.parentElement) b.element.remove();
+                    activeBubbles.splice(i, 1);
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function catchLetter(letter, bubbleElem = null) {
+            if (!gameActive) return;
+
+            const expectedIdx = collectedLetters.length;
+            const expectedLetter = targetWord[expectedIdx];
+
+            if (letter === expectedLetter) {
+                // Correct
+                playSound('correct');
+                collectedLetters.push(letter);
+
+                const slot = document.getElementById(`slot-${expectedIdx}`);
+                if (slot) {
+                    slot.innerText = letter;
+                    slot.classList.add('filled');
+                }
+
+                score += 10;
+                document.getElementById('scoreText').innerText = score;
+
+                if (bubbleElem) {
+                    bubbleElem.style.transform = 'scale(1.4)';
+                    bubbleElem.style.opacity = '0';
+                    setTimeout(() => {
+                        if (bubbleElem.parentElement) bubbleElem.remove();
+                    }, 150);
+                }
+
+                // Complete word?
+                if (collectedLetters.length === targetWord.length) {
+                    onWordCompleted();
+                }
+            } else {
+                // Error Claxon
+                playSound('error');
+
+                if (bubbleElem) {
+                    bubbleElem.style.backgroundColor = '#ef4444';
+                    bubbleElem.style.transform = 'scale(0.85)';
+                    setTimeout(() => {
+                        if (bubbleElem.parentElement) bubbleElem.remove();
+                    }, 200);
+                }
+            }
+        }
+
+        function onWordCompleted() {
+            gameActive = false;
+            playSound('fanfare');
+
+            if (window.confetti) {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            setTimeout(() => {
+                wordIndex++;
+                loadWord();
+            }, 1600);
+        }
+
+        function endRoundVictory() {
+            stopGame();
+            playSound('fanfare');
+            triggerFireworks();
+
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('victoryModal').classList.remove('hidden');
+        }
+
+        function replayGame() {
+            document.getElementById('victoryModal').classList.add('hidden');
+            startGame(currentLevel);
+        }
+
+        function clearFallingBubbles() {
+            activeBubbles.forEach(b => {
+                if (b.element && b.element.parentElement) b.element.remove();
+            });
+            activeBubbles = [];
+            const area = document.getElementById('fallingArea');
+            if (area) area.innerHTML = '';
+        }
+
+        function stopGame() {
+            gameActive = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            clearFallingBubbles();
+        }
+
+        /* ================= PHYSICAL KEYBOARD LISTENER ================= */
+        window.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            const key = e.key.toUpperCase();
+            if (key.length === 1 && key >= 'A' && key <= 'Z') {
+                catchLetter(key);
+            }
+        });
+
+        /* ================= UTILS & FIREWORKS ================= */
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function triggerFireworks() {
+            if (!window.confetti) return;
+            const duration = 2 * 1000;
+            const animationEnd = Date.now() + duration;
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                const particleCount = 40 * (timeLeft / duration);
+                confetti({ particleCount, startVelocity: 30, spread: 360, origin: { x: Math.random(), y: Math.random() - 0.2 } });
+            }, 250);
+        }
+
+        window.onload = function() {
+            showScreen('screenLanguage');
+        };
+    </script>
+</body>
+</html>
