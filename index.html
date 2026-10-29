@@ -3,998 +3,887 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CAZAPALABRAS - Juego Educativo Infantil</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
+    <title>Cazapalabras - ¡Aprende jugando!</title>
+    <!-- Google Fonts para un aspecto divertido y infantil -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        fredoka: ['"Fredoka One"', 'cursive'],
-                        quicksand: ['"Quicksand"', 'sans-serif'],
-                    },
-                    colors: {
-                        brandYellow: '#FFD166',
-                        brandPink: '#EF476F',
-                        brandGreen: '#06D6A0',
-                        brandBlue: '#118AB2',
-                        brandPurple: '#8338EC'
-                    }
-                }
-            }
-        }
-    </script>
-
     <style>
+        :root {
+            --primary: #FF5252;
+            --secondary: #FFEB3B;
+            --accent: #4CAF50;
+            --info: #2196F3;
+            --purple: #9C27B0;
+            --dark: #2C3E50;
+            --light: #F8F9FA;
+        }
+
         * {
+            box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
-            -webkit-touch-callout: none;
         }
 
         body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #74b9ff, #a29bfe);
             font-family: 'Quicksand', sans-serif;
-            background: linear-gradient(135deg, #a8edd9 0%, #fed6e3 100%);
-            touch-action: manipulation;
             overflow: hidden;
             height: 100vh;
-            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
+        /* Contenedor general de pantallas */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Pantalla de inicio */
+        .title-banner {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(3rem, 8vw, 5rem);
+            color: #FFF;
+            text-shadow: 4px 4px 0px var(--dark), -2px -2px 0px var(--primary);
+            margin-bottom: 10px;
+            text-align: center;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--dark);
+            font-weight: 700;
+            background: #FFF;
+            padding: 8px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Selección de Idiomas (Banderas) */
+        .lang-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .lang-btn {
+            background: white;
+            border: 4px solid white;
+            border-radius: 20px;
+            padding: 10px 18px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 6px 0px rgba(0,0,0,0.2);
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .lang-btn:active, .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px rgba(0,0,0,0.2);
+        }
+
+        .lang-btn.selected {
+            border-color: var(--primary);
+            background: #fff3f3;
+            transform: scale(1.05);
+        }
+
+        /* Niveles */
+        .levels-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            background: white;
+            border: none;
+            border-radius: 25px;
+            padding: 15px;
+            font-size: 1.4rem;
+            font-family: 'Fredoka One', cursive;
+            color: var(--dark);
+            cursor: pointer;
+            box-shadow: 0 6px 0px rgba(0,0,0,0.15);
+            transition: transform 0.1s, background 0.2s;
+            text-align: center;
+        }
+
+        .btn-nivel-1 { background-color: #FF6B6B; color: white; }
+        .btn-nivel-2 { background-color: #4ECDC4; color: white; }
+        .btn-nivel-3 { background-color: #FFE66D; color: var(--dark); }
+
+        .btn:hover {
+            filter: brightness(1.1);
+        }
+
+        /* --- PANTALLA DE JUEGO --- */
+        #game-screen {
+            background: radial-gradient(circle, #fbc531, #e1b12c);
+            justify-content: flex-start;
+            padding: 10px;
+        }
+
+        .game-header {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            color: var(--dark);
+        }
+
+        .back-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-family: 'Fredoka One', cursive;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #c0392b;
+        }
+
+        /* Estilo Sticker del Dibujo */
         .sticker-card {
             background: white;
-            border: 6px solid #ffffff;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15), 0 0 0 4px #e2e8f0;
-            border-radius: 2rem;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 12px 25px;
+            border-radius: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+            border: 4px solid #FFF;
+            transform: rotate(-2deg);
+            animation: floatSticker 3s ease-in-out infinite;
+        }
+
+        @keyframes floatSticker {
+            0%, 100% { transform: rotate(-2deg) translateY(0); }
+            50% { transform: rotate(2deg) translateY(-5px); }
         }
 
         .sticker-img {
-            filter: drop-shadow(0px 8px 0px rgba(0, 0, 0, 0.15));
-            transition: transform 0.3s ease;
+            font-size: 4rem;
+            line-height: 1;
+            margin-bottom: 5px;
         }
 
-        .sticker-btn {
-            box-shadow: 0 6px 0px 0px rgba(0,0,0,0.2), inset 0 2px 0px rgba(255,255,255,0.5);
-            transition: all 0.1s ease;
+        .speaker-btn {
+            background: var(--info);
+            border: none;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 1rem;
             cursor: pointer;
-        }
-
-        .sticker-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0px 0px rgba(0,0,0,0.2);
-        }
-
-        /* Falling letter bubble */
-        .letter-bubble {
-            position: absolute;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-family: 'Fredoka One', cursive;
-            font-size: 2.2rem;
-            color: #ffffff;
-            border: 4px solid #ffffff;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255,255,255,0.6);
-            cursor: pointer;
-            z-index: 40;
-            touch-action: none;
-            will-change: transform, top;
-            transition: background-color 0.15s, transform 0.1s;
+            margin-top: 5px;
+            box-shadow: 0 3px 0px #1976D2;
         }
 
-        .letter-bubble:hover {
-            transform: scale(1.1);
+        /* Espacios para formar la palabra */
+        .word-slots {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        .letter-slot {
-            width: 48px;
-            height: 56px;
-            border: 3px dashed #94a3b8;
-            border-radius: 14px;
+        .slot {
+            width: 45px;
+            height: 55px;
+            background: white;
+            border: 3px dashed var(--dark);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Fredoka One', cursive;
             font-size: 1.8rem;
-            background: rgba(255, 255, 255, 0.8);
+            color: var(--dark);
             box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
 
-        @media (min-width: 640px) {
-            .letter-slot {
-                width: 58px;
-                height: 68px;
-                font-size: 2.3rem;
-            }
-            .letter-bubble {
-                width: 76px;
-                height: 76px;
-                font-size: 2.6rem;
-            }
-        }
-
-        .letter-slot.filled {
+        .slot.filled {
+            background: #d4edda;
+            border: 3px solid var(--accent);
+            color: #155724;
             border-style: solid;
-            border-color: #06D6A0;
-            background: #06D6A0;
-            color: white;
-            box-shadow: 0 6px 12px rgba(6, 214, 160, 0.4);
-            animation: slotPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(1.1);
         }
 
-        @keyframes slotPop {
-            0% { transform: scale(0.5); }
+        /* Área de juego donde caen las letras */
+        .play-area {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        /* Burbujas de letras cayendo */
+        .falling-letter {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.8rem;
+            color: var(--dark);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            border: 3px solid #fff;
+            transition: transform 0.1s;
+        }
+
+        .falling-letter:hover {
+            transform: scale(1.15);
+        }
+
+        /* Teclado auxiliar rápido en pantalla inferior */
+        .keyboard-helper {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            padding-bottom: 10px;
+        }
+
+        .key-btn {
+            background: white;
+            border: none;
+            border-radius: 10px;
+            width: 38px;
+            height: 42px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            color: var(--dark);
+            cursor: pointer;
+            box-shadow: 0 4px 0px #bdc3c7;
+            transition: all 0.05s;
+        }
+
+        .key-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0px #bdc3c7;
+        }
+
+        /* Fuegos artificiales y celebración */
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(30); opacity: 0; }
+        }
+
+        .celebration-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .celebration-box {
+            background: white;
+            padding: 30px 50px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
             100% { transform: scale(1); }
         }
 
-        @keyframes floatAnim {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(2deg); }
-        }
-
-        .animate-float {
-            animation: floatAnim 3s ease-in-out infinite;
-        }
-
-        /* Keyboard key helper */
-        .key-btn {
-            background: white;
-            border: 2px solid #cbd5e1;
-            box-shadow: 0 4px 0 #94a3b8;
+        .celebration-title {
             font-family: 'Fredoka One', cursive;
-            transition: all 0.08s ease;
-        }
-        .key-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 1px 0 #94a3b8;
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 15px;
         }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between items-center p-2 sm:p-4 select-none relative">
+<body>
 
-    <!-- Header / Nav -->
-    <header class="w-full max-w-4xl flex justify-between items-center bg-white/90 backdrop-blur-md px-3 py-2 rounded-3xl shadow-lg border-2 border-white z-50">
-        <div class="flex items-center gap-2">
-            <button id="homeBtn" onclick="goToHome()" class="sticker-btn bg-brandPink text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl font-fredoka flex items-center gap-1.5 text-xs sm:text-base">
-                <i class="fa-solid fa-house"></i>
-                <span>Inicio</span>
-            </button>
-            <button id="soundToggleBtn" onclick="toggleMute()" class="sticker-btn bg-brandYellow text-slate-800 px-3 py-1.5 sm:px-3 sm:py-2 rounded-2xl font-fredoka text-xs sm:text-base">
-                <i id="soundIcon" class="fa-solid fa-volume-high"></i>
-            </button>
+    <!-- PANTALLA DE INICIO -->
+    <div id="home-screen" class="screen">
+        <div class="title-banner">CAZAPALABRAS</div>
+        <div class="subtitle">✨ ¡Atrapa las letras y forma la palabra! ✨</div>
+
+        <!-- Selector de Idiomas con Banderas -->
+        <div class="lang-container">
+            <button class="lang-btn selected" onclick="setLanguage('es', this)">🇪🇸 Español</button>
+            <button class="lang-btn" onclick="setLanguage('en', this)">🇬🇧 English</button>
+            <button class="lang-btn" onclick="setLanguage('va', this)">🦇 Valencià</button>
+            <button class="lang-btn" onclick="setLanguage('ca', this)">💛 Català</button>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-3">
-            <!-- Score Counter -->
-            <div class="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-2xl border-2 border-yellow-300">
-                <span class="text-xl sm:text-2xl">⭐</span>
-                <span id="scoreText" class="font-fredoka text-lg sm:text-xl text-yellow-700">0</span>
-            </div>
-
-            <!-- Current Selected Language Indicator -->
-            <button onclick="openLangModal()" class="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-2xl border-2 border-slate-200 hover:bg-slate-200">
-                <span id="currentLangFlag" class="text-xl sm:text-2xl">🇪🇸</span>
-                <i class="fa-solid fa-caret-down text-slate-500 text-xs"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- MAIN GAME WORKSPACE -->
-    <main id="mainContainer" class="w-full max-w-4xl flex-1 flex flex-col items-center justify-center relative my-1 sm:my-2 overflow-hidden">
-
-        <!-- ================= PAGE 1: LANGUAGE SELECTION ================= -->
-        <div id="screenLanguage" class="w-full max-w-xl flex flex-col items-center text-center space-y-4 sm:space-y-6 z-10 my-auto">
-            <div class="animate-float">
-                <h1 class="font-fredoka text-4xl sm:text-6xl text-brandPink drop-shadow-md tracking-wider">
-                    CAZAPALABRAS 🔤
-                </h1>
-                <p class="text-slate-700 font-bold text-base sm:text-lg mt-1">¡Caza las letras y forma la palabra!</p>
-            </div>
-
-            <div class="sticker-card p-5 sm:p-6 w-full bg-white/95">
-                <h2 class="font-fredoka text-xl sm:text-2xl text-slate-700 mb-4">Elige tu idioma / Choose language:</h2>
-                
-                <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                    <!-- Spanish -->
-                    <button onclick="selectLanguage('es')" class="sticker-btn bg-red-500 hover:bg-red-600 text-white p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
-                        <span class="text-3xl sm:text-4xl">🇪🇸</span>
-                        <span class="font-fredoka text-base sm:text-lg">Español</span>
-                    </button>
-
-                    <!-- English -->
-                    <button onclick="selectLanguage('en')" class="sticker-btn bg-blue-600 hover:bg-blue-700 text-white p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
-                        <span class="text-3xl sm:text-4xl">🇬🇧</span>
-                        <span class="font-fredoka text-base sm:text-lg">English</span>
-                    </button>
-
-                    <!-- Valenciano -->
-                    <button onclick="selectLanguage('va')" class="sticker-btn bg-yellow-400 hover:bg-yellow-500 text-slate-900 p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
-                        <div class="w-10 h-7 rounded overflow-hidden shadow border border-white flex relative">
-                            <div class="h-full w-full bg-yellow-400 flex flex-col justify-between">
-                                <div class="h-1 bg-red-600"></div>
-                                <div class="h-1 bg-red-600"></div>
-                                <div class="h-1 bg-red-600"></div>
-                                <div class="h-1 bg-red-600"></div>
-                            </div>
-                            <div class="absolute left-0 top-0 bottom-0 w-2.5 bg-blue-600 flex items-center justify-center">
-                                <span class="text-[6px]">👑</span>
-                            </div>
-                        </div>
-                        <span class="font-fredoka text-base sm:text-lg">Valencià</span>
-                    </button>
-
-                    <!-- Catalan -->
-                    <button onclick="selectLanguage('ca')" class="sticker-btn bg-amber-400 hover:bg-amber-500 text-slate-900 p-3 sm:p-4 rounded-2xl flex flex-col items-center gap-1 transition">
-                        <div class="w-10 h-7 rounded overflow-hidden shadow border border-white flex flex-col justify-between bg-yellow-400">
-                            <div class="h-1 bg-red-600"></div>
-                            <div class="h-1 bg-red-600"></div>
-                            <div class="h-1 bg-red-600"></div>
-                            <div class="h-1 bg-red-600"></div>
-                        </div>
-                        <span class="font-fredoka text-base sm:text-lg">Català</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= PAGE 2: LEVEL SELECTION ================= -->
-        <div id="screenLevel" class="hidden w-full max-w-xl flex flex-col items-center text-center space-y-4 sm:space-y-6 z-10 my-auto">
-            <h2 class="font-fredoka text-3xl sm:text-5xl text-brandBlue drop-shadow-sm">
-                Selecciona Nivel 🎯
-            </h2>
-
-            <div class="w-full space-y-3 sm:space-y-4">
-                <!-- Level 1 -->
-                <button onclick="startGame(1)" class="sticker-btn w-full bg-brandGreen text-white p-4 sm:p-5 rounded-3xl flex items-center justify-between text-left">
-                    <div class="flex items-center gap-3 sm:gap-4">
-                        <div class="bg-white/30 text-2xl sm:text-3xl p-2.5 sm:p-3 rounded-2xl">🌱</div>
-                        <div>
-                            <div class="font-fredoka text-xl sm:text-2xl" id="lvl1Title">Nivel 1: Cortas</div>
-                            <div class="text-xs sm:text-sm opacity-90 font-semibold" id="lvl1Desc">3 - 4 letras (5-6 años)</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-xl"></i>
-                </button>
-
-                <!-- Level 2 -->
-                <button onclick="startGame(2)" class="sticker-btn w-full bg-brandYellow text-slate-900 p-4 sm:p-5 rounded-3xl flex items-center justify-between text-left">
-                    <div class="flex items-center gap-3 sm:gap-4">
-                        <div class="bg-white/40 text-2xl sm:text-3xl p-2.5 sm:p-3 rounded-2xl">⭐</div>
-                        <div>
-                            <div class="font-fredoka text-xl sm:text-2xl" id="lvl2Title">Nivel 2: Medias</div>
-                            <div class="text-xs sm:text-sm opacity-90 font-semibold" id="lvl2Desc">5 - 6 letras (7-8 años)</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-xl"></i>
-                </button>
-
-                <!-- Level 3 -->
-                <button onclick="startGame(3)" class="sticker-btn w-full bg-brandPurple text-white p-4 sm:p-5 rounded-3xl flex items-center justify-between text-left">
-                    <div class="flex items-center gap-3 sm:gap-4">
-                        <div class="bg-white/30 text-2xl sm:text-3xl p-2.5 sm:p-3 rounded-2xl">🚀</div>
-                        <div>
-                            <div class="font-fredoka text-xl sm:text-2xl" id="lvl3Title">Nivel 3: Largas</div>
-                            <div class="text-xs sm:text-sm opacity-90 font-semibold" id="lvl3Desc">7+ letras (9-10 años)</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-xl"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- ================= PAGE 3: GAMEPLAY SCREEN ================= -->
-        <div id="screenGame" class="hidden w-full h-full flex flex-col justify-between items-center relative overflow-hidden">
-
-            <!-- Progress Header -->
-            <div class="w-full max-w-xl bg-white/95 rounded-2xl px-3 py-2 shadow-md border-2 border-white flex flex-col gap-1.5 z-30">
-                <div class="flex justify-between items-center font-fredoka text-xs sm:text-sm text-slate-700">
-                    <span id="wordProgressText">Palabra 1 de 5</span>
-                    <button onclick="repeatSpeech()" class="bg-brandBlue text-white px-3 py-1 rounded-xl text-xs flex items-center gap-1.5 hover:bg-blue-600 active:scale-95">
-                        <i class="fa-solid fa-volume-high"></i> Escuchar palabra
-                    </button>
-                </div>
-                <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                    <div id="progressBar" class="bg-brandGreen h-full w-0 transition-all duration-300"></div>
-                </div>
-            </div>
-
-            <!-- Sticker Image Box -->
-            <div class="z-20 my-1 sm:my-2 flex flex-col items-center">
-                <div class="sticker-card p-3 sm:p-5 bg-white flex flex-col items-center justify-center min-w-[150px] min-h-[150px] sm:min-w-[200px] sm:min-h-[200px]">
-                    <span id="wordEmoji" class="text-6xl sm:text-8xl sticker-img select-none">🐶</span>
-                    <p id="wordHintText" class="font-fredoka text-lg sm:text-2xl text-slate-700 mt-1 tracking-widest capitalize"></p>
-                </div>
-            </div>
-
-            <!-- Slots container for letters -->
-            <div class="z-30 my-1 flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-full px-2" id="slotsContainer">
-                <!-- Slots inserted dynamically -->
-            </div>
-
-            <!-- Interactive On-Screen Quick Letters Bar (For touch or easy pick) -->
-            <div class="z-30 w-full max-w-2xl px-2 pb-1">
-                <div class="text-center font-fredoka text-xs text-slate-600 mb-1">
-                    💡 Toca las letras cayendo o presiona en tu teclado
-                </div>
-                <div id="quickKeypad" class="flex flex-wrap justify-center gap-1">
-                    <!-- Quick key buttons auto-generated for current word -->
-                </div>
-            </div>
-
-            <!-- Falling letter layer -->
-            <div id="fallingArea" class="absolute inset-0 z-20 pointer-events-auto">
-                <!-- Bubbles appended here -->
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Modal Language Selector -->
-    <div id="langModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-5 max-w-sm w-full text-center shadow-2xl border-4 border-white space-y-4">
-            <h3 class="font-fredoka text-2xl text-slate-800">Cambiar Idioma</h3>
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="changeLanguageAndClose('es')" class="p-3 bg-slate-100 hover:bg-red-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
-                    <span>🇪🇸</span> Español
-                </button>
-                <button onclick="changeLanguageAndClose('en')" class="p-3 bg-slate-100 hover:bg-blue-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
-                    <span>🇬🇧</span> English
-                </button>
-                <button onclick="changeLanguageAndClose('va')" class="p-3 bg-slate-100 hover:bg-yellow-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
-                    <span>👑</span> Valencià
-                </button>
-                <button onclick="changeLanguageAndClose('ca')" class="p-3 bg-slate-100 hover:bg-amber-50 rounded-2xl flex items-center gap-2 border font-fredoka text-slate-800">
-                    <span>💛</span> Català
-                </button>
-            </div>
-            <button onclick="closeLangModal()" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 font-fredoka text-slate-700 rounded-xl">Cancelar</button>
+        <!-- Niveles -->
+        <div class="levels-container">
+            <button class="btn btn-nivel-1" onclick="startGame(1)">⭐ Nivel 1: Cortas (5-6 años)</button>
+            <button class="btn btn-nivel-2" onclick="startGame(2)">🌟 Nivel 2: Medias (7-8 años)</button>
+            <button class="btn btn-nivel-3" onclick="startGame(3)">🚀 Nivel 3: Largas (9-10 años)</button>
         </div>
     </div>
 
-    <!-- Modal Victory Round -->
-    <div id="victoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="sticker-card bg-white p-6 sm:p-8 max-w-md w-full text-center space-y-5">
-            <div class="text-6xl sm:text-7xl animate-bounce">🏆</div>
-            <h2 class="font-fredoka text-3xl sm:text-4xl text-brandYellow drop-shadow">¡GENIAL!</h2>
-            <p class="font-quicksand font-bold text-slate-600 text-base sm:text-lg">¡Has completado todas las palabras!</p>
-            
-            <div class="flex justify-center items-center gap-2 text-2xl sm:text-3xl font-fredoka text-slate-800 bg-yellow-100 py-2 rounded-2xl border-2 border-yellow-300">
-                <span>⭐</span>
-                <span id="finalScore">0</span>
-                <span>Puntos</span>
-            </div>
-
-            <div class="flex flex-col gap-2.5">
-                <button onclick="replayGame()" class="sticker-btn w-full bg-brandGreen text-white font-fredoka py-3.5 rounded-2xl text-lg sm:text-xl">
-                    ¡Jugar de nuevo! 🔄
-                </button>
-                <button onclick="goToLevelSelect()" class="sticker-btn w-full bg-brandBlue text-white font-fredoka py-3 rounded-2xl text-base sm:text-lg">
-                    Elegir otro nivel 🎯
-                </button>
-            </div>
+    <!-- PANTALLA DE JUEGO -->
+    <div id="game-screen" class="screen hidden">
+        <div class="game-header">
+            <button class="back-btn" onclick="goToHome()">⬅ Salir</button>
+            <div class="stats" id="word-counter">Palabra: 1 / 10</div>
+            <div class="stats" id="level-display">Nivel 1</div>
         </div>
+
+        <!-- Sticker del animal u objeto -->
+        <div class="sticker-card">
+            <div class="sticker-img" id="item-emoji">🐶</div>
+            <button class="speaker-btn" onclick="speakCurrentWord()">🔊 Escuchar</button>
+        </div>
+
+        <!-- Ranuras de letras -->
+        <div class="word-slots" id="word-slots"></div>
+
+        <!-- Área interactiva de caídas -->
+        <div class="play-area" id="play-area"></div>
+
+        <!-- Teclado en pantalla como apoyo táctil -->
+        <div class="keyboard-helper" id="keyboard-helper"></div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        /* ================= WORD DATABASE ================= */
-        const WORD_DATABASE = {
+        // Configuración de Idioma Actual (por defecto Español)
+        let currentLang = 'es';
+        let currentLevel = 1;
+        let currentWordIndex = 0;
+        let activeWords = [];
+        let currentWordData = null;
+        let currentSlotIndex = 0;
+        let activeLetters = [];
+        let gameInterval = null;
+        let animationFrameId = null;
+        let isGameActive = false;
+
+        // --- GRAN BASE DE DATOS (+100 PALABRAS POR IDIOMA) ---
+        const DATABASE = {
             es: {
-                level1: [
-                    { word: "SOL", emoji: "☀️" },
-                    { word: "PEZ", emoji: "🐟" },
-                    { word: "OSO", emoji: "🐻" },
-                    { word: "PAN", emoji: "🍞" },
-                    { word: "UVA", emoji: "🍇" },
-                    { word: "VACA", emoji: "🐮" },
-                    { word: "GATO", emoji: "🐱" },
-                    { word: "PATO", emoji: "🦆" },
-                    { word: "LEON", emoji: "🦁" },
-                    { word: "LUNA", emoji: "🌙" },
-                    { word: "CASA", emoji: "🏠" },
-                    { word: "BHO", emoji: "🦉" }
+                1: [ // Cortas (3-4 letras)
+                    {w:"GATO", e:"🐱"}, {w:"PERO", e:"🐶"}, {w:"OSO", e:"🐻"}, {w:"VACA", e:"🐮"},
+                    {w:"PATO", e:"🦆"}, {w:"RANA", e:"🐸"}, {w:"LEON", e:"🦁"}, {w:"LOBO", e:"🐺"},
+                    {w:"CASA", e:"🏠"}, {w:"AUTO", e:"🚗"}, {w:"TREN", e:"🚂"}, {w:"FLOR", e:"🌸"},
+                    {w:"LUNA", e:"🌙"}, {w:"SOL", e:"☀️"}, {w:"MAR", e:"🌊"}, {w:"PAN", e:"🍞"},
+                    {w:"UVA", e:"🍇"}, {w:"PEI", e:"🐟"}, {w:"BOTA", e:"👢"}, {w:"MESA", e:"🪑"},
+                    {w:"CAJA", e:"📦"}, {w:"PALA", e:"⛏️"}, {w:"NIDO", e:"🪹"}, {w:"PIPA", e:"🌻"},
+                    {w:"BOLA", e:"⚽"}, {w:"MOTO", e:"🏍️"}, {w:"ROSA", e:"🌹"}, {w:"LAPIZ", e:"✏️"},
+                    {w:"SOPA", e:"🍲"}, {w:"DADO", e:"🎲"}, {w:"LANA", e:"🧶"}, {w:"PIANO", e:"🎹"},
+                    {w:"VASO", e:"🥛"}, {w:"LOMA", e:"⛰️"}, {w:"FOCA", e:"🦭"}, {w:"MONO", e:"🐵"}
                 ],
-                level2: [
-                    { word: "PERRO", emoji: "🐶" },
-                    { word: "RATON", emoji: "🐭" },
-                    { word: "TIGRE", emoji: "🐯" },
-                    { word: "ZEBRA", emoji: "🦓" },
-                    { word: "CERDO", emoji: "🐷" },
-                    { word: "ZORRO", emoji: "🦊" },
-                    { word: "OVEJA", emoji: "🐑" },
-                    { word: "MONO", emoji: "🐒" },
-                    { word: "LIBRO", emoji: "📖" },
-                    { word: "AVION", emoji: "✈️" },
-                    { word: "FLOR", emoji: "🌺" },
-                    { word: "COCHE", emoji: "🚗" }
+                2: [ // Medias (5-6 letras)
+                    {w:"PERRO", e:"🐕"}, {w:"GATITO", e:"🐈"}, {w:"CONEJO", e:"🐰"}, {w:"TIGRE", e:"🐅"},
+                    {w:"CEBRA", e:"🦓"}, {w:"JIRAFA", e:"🦒"}, {w:"MONITO", e:"🐒"}, {w:"RATON", e:"🐭"},
+                    {w:"CABRA", e:"🐐"}, {w:"OVEJA", e:"🐑"}, {w:"CERDO", e:"🐷"}, {w:"GALLO", e:"🐓"},
+                    {w:"AVION", e:"✈️"}, {w:"BARCO", e:"⛵"}, {w:"COHETE", e:"🚀"}, {w:"PELOTA", e:"⚽"},
+                    {w:"ARBOL", e:"🌳"}, {w:"PLANTA", e:"🪴"}, {w:"SIRENA", e:"🧜‍♀️"}, {w:"SILLA", e:"🪑"},
+                    {w:"BOLSA", e:"👜"}, {w:"GORILA", e:"🦍"}, {w:"BALLENA", e:"🐋"}, {w:"TIBURON", e:"🦈"},
+                    {w:"HELADO", e:"🍦"}, {w:"SANDIA", e:"🍉"}, {w:"PLANO", e:"📐"}, {w:"LIBRO", e:"📖"},
+                    {w:"LAPIZ", e:"✏️"}, {w:"RADIO", e:"📻"}, {w:"RELOJ", e:"⏰"}, {w:"TIJERAS", e:"✂️"},
+                    {w:"BOTLLA", e:"🍾"}, {w:"CEREZA", e:"🍒"}, {w:"PLATANO", e:"🍌"}, {w:"NARANJA", e:"🍊"},
+                    {w:"CANGURO", e:"🦘"}, {w:"TORTUGA", e:"🐢"}, {w:"PINGUINO", e:"🐧"}, {w:"ARDILLA", e:"🐿️"}
                 ],
-                level3: [
-                    { word: "ELEFANTE", emoji: "🐘" },
-                    { word: "SERPIENTE", emoji: "🐍" },
-                    { word: "MARIPOSA", emoji: "🦋" },
-                    { word: "COCODRILO", emoji: "🐊" },
-                    { word: "DINOSAURIO", emoji: "🦕" },
-                    { word: "FLAMENCO", emoji: "🦩" },
-                    { word: "ARDILLA", emoji: "🐿️" },
-                    { word: "PINGUINO", emoji: "🐧" },
-                    { word: "TORTUGA", emoji: "🐢" },
-                    { word: "BICICLETA", emoji: "🚲" },
-                    { word: "GUITARRA", emoji: "🎸" }
+                3: [ // Largas (7+ letras)
+                    {w:"ELEFANTE", e:"🐘"}, {w:"COCODRILO", e:"🐊"}, {w:"MARIPOSA", e:"🦋"}, {w:"HIPOPOTAMO", e:"🦛"},
+                    {w:"MEDUSA", e:"🪼"}, {w:"ESTRELLA", e:"⭐"}, {w:"BICICLETA", e:"🚲"}, {w:"HELICOPTERO", e:"🚁"},
+                    {w:"DINOSAURIO", e:"🦕"}, {w:"MURCIELAGO", e:"🦇"}, {w:"CAMALEON", e:"🦎"}, {w:"ORITORRINCO", e:"🦦"},
+                    {w:"CAMION", e:"🚛"}, {w:"MARTILLO", e:"🔨"}, {w:"TELEFONO", e:"☎️"}, {w:"COMPUTADORA", e:"💻"},
+                    {w:"ZAPATILLA", e:"👟"}, {w:"SOMBRERO", e:"👒"}, {w:"GIRASOL", e:"🌻"}, {w:"PARAGUAS", e:"☂️"},
+                    {w:"PASTEL", e:"🎂"}, {w:"CHOCOLATE", e:"🍫"}, {w:"SANDWICH", e:"🥪"}, {w:"FRESAS", e:"🍓"},
+                    {w:"BALLENA", e:"🐋"}, {w:"TIBURON", e:"🦈"}, {w:"DINOSAURIO", e:"🦖"}, {w:"FARMACIA", e:"🏥"},
+                    {w:"BIBLIOTECA", e:"📚"}, {w:"HOSPITAL", e:"🏥"}, {w:"BOMBEROS", e:"🚒"}, {w:"POLICIA", e:"🚓"},
+                    {w:"ASTRONAUTA", e:"👨‍🚀"}, {w:"INFORMATICA", e:"💻"}, {w:"ACUARIO", e:"🐠"}, {w:"BOTANICO", e:"🌿"}
                 ]
             },
             en: {
-                level1: [
-                    { word: "CAT", emoji: "🐱" },
-                    { word: "DOG", emoji: "🐶" },
-                    { word: "SUN", emoji: "☀️" },
-                    { word: "PIG", emoji: "🐷" },
-                    { word: "FOX", emoji: "🦊" },
-                    { word: "COW", emoji: "🐮" },
-                    { word: "DUCK", emoji: "🦆" },
-                    { word: "FISH", emoji: "🐟" },
-                    { word: "BIRD", emoji: "🐦" },
-                    { word: "BEAR", emoji: "🐻" },
-                    { word: "FROG", emoji: "🐸" }
+                1: [ // Short
+                    {w:"CAT", e:"🐱"}, {w:"DOG", e:"🐶"}, {w:"BEAR", e:"🐻"}, {w:"COW", e:"🐮"},
+                    {w:"DUCK", e:"🦆"}, {w:"FROG", e:"🐸"}, {w:"LION", e:"🦁"}, {w:"WOLF", e:"🐺"},
+                    {w:"HOUSE", e:"🏠"}, {w:"CAR", e:"🚗"}, {w:"TRAIN", e:"🚂"}, {w:"FLOWER", e:"🌸"},
+                    {w:"MOON", e:"🌙"}, {w:"SUN", e:"☀️"}, {w:"SEA", e:"🌊"}, {w:"BREAD", e:"🍞"},
+                    {w:"GRAPE", e:"🍇"}, {w:"FISH", e:"🐟"}, {w:"BOOT", e:"👢"}, {w:"DESK", e:"🪑"},
+                    {w:"BOX", e:"📦"}, {w:"NEST", e:"🪹"}, {w:"BALL", e:"⚽"}, {w:"BIKE", e:"🏍️"},
+                    {w:"ROSE", e:"🌹"}, {w:"SOUP", e:"🍲"}, {w:"DICE", e:"🎲"}, {w:"WOOL", e:"🧶"},
+                    {w:"PIANO", e:"🎹"}, {w:"CUP", e:"🥛"}, {w:"SEAL", e:"🦭"}, {w:"MONKEY", e:"🐵"},
+                    {w:"TREE", e:"🌳"}, {w:"STAR", e:"⭐"}, {w:"BIRD", e:"🐦"}, {w:"MILK", e:"🥛"}
                 ],
-                level2: [
-                    { word: "TIGER", emoji: "🐯" },
-                    { word: "ZEBRA", emoji: "🦓" },
-                    { word: "SHEEP", emoji: "🐑" },
-                    { word: "HORSE", emoji: "🐴" },
-                    { word: "SNAKE", emoji: "🐍" },
-                    { word: "MOUSE", emoji: "🐭" },
-                    { word: "APPLE", emoji: "🍎" },
-                    { word: "HOUSE", emoji: "🏠" },
-                    { word: "TRAIN", emoji: "🚆" },
-                    { word: "MONKEY", emoji: "🐒" }
+                2: [ // Medium
+                    {w:"PUPPY", e:"🐕"}, {w:"RABBIT", e:"🐰"}, {w:"TIGER", e:"🐅"}, {w:"ZEBRA", e:"🦓"},
+                    {w:"GIRAFFE", e:"🦒"}, {w:"MOUSE", e:"🐭"}, {w:"SHEEP", e:"🐑"}, {w:"PIGGY", e:"🐷"},
+                    {w:"ROOSTER", e:"🐓"}, {w:"PLANE", e:"✈️"}, {w:"BOAT", e:"⛵"}, {w:"ROCKET", e:"🚀"},
+                    {w:"PLANT", e:"🪴"}, {w:"CHAIR", e:"🪑"}, {w:"BAG", e:"👜"}, {w:"GORILLA", e:"🦍"},
+                    {w:"WHALE", e:"🐋"}, {w:"SHARK", e:"🦈"}, {w:"ICEBERG", e:"🧊"}, {w:"MELON", e:"🍉"},
+                    {w:"BOOK", e:"📖"}, {w:"RADIO", e:"📻"}, {w:"CLOCK", e:"⏰"}, {w:"SCISSORS", e:"✂️"},
+                    {w:"BOTTLE", e:"🍾"}, {w:"CHERRY", e:"🍒"}, {w:"BANANA", e:"🍌"}, {w:"ORANGE", e:"🍊"},
+                    {w:"KANGAROO", e:"🦘"}, {w:"TURTLE", e:"🐢"}, {w:"PENGUIN", e:"🐧"}, {w:"SQUIRREL", e:"🐿️"}
                 ],
-                level3: [
-                    { word: "ELEPHANT", emoji: "🐘" },
-                    { word: "BUTTERFLY", emoji: "🦋" },
-                    { word: "CROCODILE", emoji: "🐊" },
-                    { word: "DINOSAUR", emoji: "🦕" },
-                    { word: "FLAMINGO", emoji: "🦩" },
-                    { word: "SQUIRREL", emoji: "🐿️" },
-                    { word: "PENGUIN", emoji: "🐧" },
-                    { word: "TURTLE", emoji: "🐢" },
-                    { word: "BICYCLE", emoji: "🚲" },
-                    { word: "DOLPHIN", emoji: "🐬" }
+                3: [ // Long
+                    {w:"ELEPHANT", e:"🐘"}, {w:"CROCODILE", e:"🐊"}, {w:"BUTTERFLY", e:"🦋"}, {w:"HIPPOPOTAMUS", e:"🦛"},
+                    {w:"JELLYFISH", e:"🪼"}, {w:"BICYCLE", e:"🚲"}, {w:"HELICOPTER", e:"🚁"}, {w:"DINOSAUR", e:"🦕"},
+                    {w:"BATMAN", e:"🦇"}, {w:"CHAMELEON", e:"🦎"}, {w:"TRACTOR", e:"🚜"}, {w:"HAMMER", e:"🔨"},
+                    {w:"TELEPHONE", e:"☎️"}, {w:"COMPUTER", e:"💻"}, {w:"SNEAKERS", e:"👟"}, {w:"SUNFLOWER", e:"🌻"},
+                    {w:"UMBRELLA", e:"☂️"}, {w:"CUPCAKE", e:"🧁"}, {w:"CHOCOLATE", e:"🍫"}, {w:"SANDWICH", e:"🥪"},
+                    {w:"STRAWBERRY", e:"🍓"}, {w:"ASTRONAUT", e:"👨‍🚀"}, {w:"HOSPITAL", e:"🏥"}, {w:"FIREFIGHTER", e:"🚒"},
+                    {w:"POLICE", e:"🚓"}, {w:"LIBRARY", e:"📚"}, {w:"AQUARIUM", e:"🐠"}, {w:"SCIENTIST", e:"🔬"}
                 ]
             },
             va: {
-                level1: [
-                    { word: "SOL", emoji: "☀️" },
-                    { word: "PA", emoji: "🍞" },
-                    { word: "GAT", emoji: "🐱" },
-                    { word: "GOS", emoji: "🐶" },
-                    { word: "OS", emoji: "🐻" },
-                    { word: "UVA", emoji: "🍇" },
-                    { word: "RATA", emoji: "🐀" },
-                    { word: "CASA", emoji: "🏠" },
-                    { word: "PATO", emoji: "🦆" },
-                    { word: "LLEO", emoji: "🦁" }
+                1: [ // Cortes
+                    {w:"GAT", e:"🐱"}, {w:"GOS", e:"🐶"}, {w:"ÓS", e:"🐻"}, {w:"VACA", e:"🐮"},
+                    {w:"ÀPAT", e:"🦆"}, {w:"GRANA", e:"🐸"}, {w:"LLEÓ", e:"🦁"}, {w:"LLOP", e:"🐺"},
+                    {w:"CASA", e:"🏠"}, {w:"COTXE", e:"🚗"}, {w:"TREN", e:"🚂"}, {w:"FLOR", e:"🌸"},
+                    {w:"LLUNA", e:"🌙"}, {w:"SOL", e:"☀️"}, {w:"MAR", e:"🌊"}, {w:"PA", e:"🍞"},
+                    {w:"RAïM", e:"🍇"}, {w:"PEIX", e:"🐟"}, {w:"BOTA", e:"👢"}, {w:"TAULA", e:"🪑"},
+                    {w:"CAIXA", e:"📦"}, {w:"PALA", e:"⛏️"}, {w:"NID", e:"🪹"}, {w:"PILOTA", e:"⚽"},
+                    {w:"MOTO", e:"🏍️"}, {w:"ROSA", e:"🌹"}, {w:"LLapis", e:"✏️"}, {w:"SOPA", e:"🍲"},
+                    {w:"Dau", e:"🎲"}, {w:"LLANA", e:"🧶"}, {w:"PIANO", e:"🎹"}, {w:"VAS", e:"🥛"},
+                    {w:"FOCA", e:"🦭"}, {w:"MONO", e:"🐵"}, {w:"ARBRE", e:"🌳"}, {w:"ESTRELLA", e:"⭐"}
                 ],
-                level2: [
-                    { word: "TIGRE", emoji: "🐯" },
-                    { word: "PORC", emoji: "🐷" },
-                    { word: "CORB", emoji: "🦅" },
-                    { word: "VACA", emoji: "🐮" },
-                    { word: "OCELL", emoji: "🐦" },
-                    { word: "PEIX", emoji: "🐟" },
-                    { word: "LLIBRE", emoji: "📖" },
-                    { word: "AVIO", emoji: "✈️" },
-                    { word: "FLOR", emoji: "🌺" },
-                    { word: "MONO", emoji: "🐒" }
+                2: [ // Mitjanes
+                    {w:"GOSSET", e:"🐕"}, {w:"CONILL", e:"🐰"}, {w:"TIGRE", e:"🐅"}, {w:"ZEBRA", e:"🦓"},
+                    {w:"GIRAFA", e:"🦒"}, {w:"RATOLÍ", e:"🐭"}, {w:"CABRA", e:"🐐"}, {w:"ovella", e:"🐑"},
+                    {w:"PORC", e:"🐷"}, {w:"GALL", e:"🐓"}, {w:"AVIÓ", e:"✈️"}, {w:"VAIXELL", e:"⛵"},
+                    {w:"COET", e:"🚀"}, {w:"PLANTA", e:"🪴"}, {w:"SIRENA", e:"🧜‍♀️"}, {w:"BUTACA", e:"🪑"},
+                    {w:"BOSSA", e:"👜"}, {w:"GORILA", e:"🦍"}, {w:"BALENA", e:"🐋"}, {w:"TAURÓ", e:"🦈"},
+                    {w:"GELAT", e:"🍦"}, {w:"SÍNDRIA", e:"🍉"}, {w:"LLIBRE", e:"📖"}, {w:"RÀDIO", e:"📻"},
+                    {w:"RELLOTGE", e:"⏰"}, {w:"TISORES", e:"✂️"}, {w:"ampolla", e:"🍾"}, {w:"cirera", e:"🍒"},
+                    {w:"PLATAN", e:"🍌"}, {w:"TARONJA", e:"🍊"}, {w:"CANGUR", e:"🦘"}, {w:"TARTARUGA", e:"🐢"}
                 ],
-                level3: [
-                    { word: "ELEFANT", emoji: "🐘" },
-                    { word: "SERPENT", emoji: "🐍" },
-                    { word: "PAPALLONA", emoji: "🦋" },
-                    { word: "COCODRIL", emoji: "🐊" },
-                    { word: "DINOSAURE", emoji: "🦕" },
-                    { word: "FLAMENC", emoji: "🦩" },
-                    { word: "ESQUIROL", emoji: "🐿️" },
-                    { word: "PINGUI", emoji: "🐧" },
-                    { word: "TORTUGA", emoji: "🐢" },
-                    { word: "BICICLETA", emoji: "🚲" }
+                3: [ // Llargues
+                    {w:"ELEFANT", e:"🐘"}, {w:"COCODRIL", e:"🐊"}, {w:"PAPALLONA", e:"🦋"}, {w:"HIPOPÒTAM", e:"🦛"},
+                    {w:"MEDUSA", e:"🪼"}, {w:"BICICLETA", e:"🚲"}, {w:"HELICÒPTER", e:"🚁"}, {w:"DINOSAURE", e:"🦕"},
+                    {w:"RATPENAT", e:"🦇"}, {w:" CAMALEÓ", e:"🦎"}, {w:"TRACTOR", e:"🚜"}, {w:"MARTELL", e:"🔨"},
+                    {w:"TELÈFON", e:"☎️"}, {w:"ORDINADOR", e:"💻"}, {w:"ESPORTIVES", e:"👟"}, {w:"Girasol", e:"🌻"},
+                    {w:"PARAIGUA", e:"☂️"}, {w:"PASTÍS", e:"🎂"}, {w:"XOCOLATA", e:"🍫"}, {w:"BOCATA", e:"🥪"},
+                    {w:"MADUIXA", e:"🍓"}, {w:" ASTRONAUTA", e:"👨‍🚀"}, {w:"HOSPITAL", e:"🏥"}, {w:"BOMBERS", e:"🚒"},
+                    {w:"POLICIA", e:"🚓"}, {w:"BIBLIOTECA", e:"📚"}, {w:"AQUARI", e:"🐠"}, {w:"CIENTÍFIC", e:"🔬"}
                 ]
             },
             ca: {
-                level1: [
-                    { word: "SOL", emoji: "☀️" },
-                    { word: "PA", emoji: "🍞" },
-                    { word: "GAT", emoji: "🐱" },
-                    { word: "GOS", emoji: "🐶" },
-                    { word: "OS", emoji: "🐻" },
-                    { word: "UVA", emoji: "🍇" },
-                    { word: "RATA", emoji: "🐀" },
-                    { word: "CASA", emoji: "🏠" },
-                    { word: "LLUNA", emoji: "🌙" },
-                    { word: "LLEO", emoji: "🦁" }
+                1: [ // Curtes
+                    {w:"GAT", e:"🐱"}, {w:"GOS", e:"🐶"}, {w:"ÓS", e:"🐻"}, {w:"VACA", e:"🐮"},
+                    {w:"ÀNEC", e:"🦆"}, {w:"GRANA", e:"🐸"}, {w:"LLEÓ", e:"🦁"}, {w:"LLOP", e:"🐺"},
+                    {w:"CASA", e:"🏠"}, {w:"COTXE", e:"🚗"}, {w:"TREN", e:"🚂"}, {w:"FLOR", e:"🌸"},
+                    {w:"LLUNA", e:"🌙"}, {w:"SOL", e:"☀️"}, {w:"MAR", e:"🌊"}, {w:"PA", e:"🍞"},
+                    {w:"RAÏM", e:"🍇"}, {w:"PEIX", e:"🐟"}, {w:"BOTA", e:"👢"}, {w:"TAULA", e:"🪑"},
+                    {w:"CAIXA", e:"📦"}, {w:"PALA", e:"⛏️"}, {w:"NID", e:"🪹"}, {w:"PILOTA", e:"⚽"},
+                    {w:"MOTO", e:"🏍️"}, {w:"ROSA", e:"🌹"}, {w:"LLAPIS", e:"✏️"}, {w:"SOPA", e:"🍲"},
+                    {w:"DAU", e:"🎲"}, {w:"LLANA", e:"🧶"}, {w:"PIANO", e:"🎹"}, {w:"VAS", e:"🥛"},
+                    {w:"FOCA", e:"🦭"}, {w:"MONO", e:"🐵"}, {w:"ARBRE", e:"🌳"}, {w:"ESTRELLA", e:"⭐"}
                 ],
-                level2: [
-                    { word: "TIGRE", emoji: "🐯" },
-                    { word: "PORC", emoji: "🐷" },
-                    { word: "ROSA", emoji: "🌹" },
-                    { word: "OCELL", emoji: "🐦" },
-                    { word: "PEIX", emoji: "🐟" },
-                    { word: "LLIBRE", emoji: "📖" },
-                    { word: "AVIO", emoji: "✈️" },
-                    { word: "FLOR", emoji: "🌺" },
-                    { word: "MONO", emoji: "🐒" },
-                    { word: "COTXE", emoji: "🚗" }
+                2: [ // Mitjanes
+                    {w:"GOSSET", e:"🐕"}, {w:"CONILL", e:"🐰"}, {w:"TIGRE", e:"🐅"}, {w:"ZEBRA", e:"🦓"},
+                    {w:"GIRAFA", e:"🦒"}, {w:"RATOLÍ", e:"🐭"}, {w:"CABRA", e:"🐐"}, {w:"OVELLA", e:"🐑"},
+                    {w:"PORC", e:"🐷"}, {w:"GALL", e:"🐓"}, {w:"AVIÓ", e:"✈️"}, {w:"VAIXELL", e:"⛵"},
+                    {w:"COET", e:"🚀"}, {w:"PLANTA", e:"🪴"}, {w:"SIRENA", e:"🧜‍♀️"}, {w:"BUTACA", e:"🪑"},
+                    {w:"BOSSA", e:"👜"}, {w:"GORILA", e:"🦍"}, {w:"BALENA", e:"🐋"}, {w:"TAURÓ", e:"🦈"},
+                    {w:"GELAT", e:"🍦"}, {w:"SÍNDRIA", e:"🍉"}, {w:"LLIBRE", e:"📖"}, {w:"RÀDIO", e:"📻"},
+                    {w:"RELLOTGE", e:"⏰"}, {w:"TISORES", e:"✂️"}, {w:"AMPOLLA", e:"🍾"}, {w:"CIRERA", e:"🍒"},
+                    {w:"PLATAN", e:"🍌"}, {w:"TARONJA", e:"🍊"}, {w:"CANGUR", e:"🦘"}, {w:"TARTARUGA", e:"🐢"}
                 ],
-                level3: [
-                    { word: "ELEFANT", emoji: "🐘" },
-                    { word: "SERPENT", emoji: "🐍" },
-                    { word: "PAPALLONA", emoji: "🦋" },
-                    { word: "COCODRIL", emoji: "🐊" },
-                    { word: "DINOSAURE", emoji: "🦕" },
-                    { word: "FLAMENC", emoji: "🦩" },
-                    { word: "ESQUIROL", emoji: "🐿️" },
-                    { word: "PINGUI", emoji: "🐧" },
-                    { word: "TORTUGA", emoji: "🐢" },
-                    { word: "BICICLETA", emoji: "🚲" }
+                3: [ // Llargues
+                    {w:"ELEFANT", e:"🐘"}, {w:"COCODRIL", e:"🐊"}, {w:"PAPALLONA", e:"🦋"}, {w:"HIPOPÒTAM", e:"🦛"},
+                    {w:"MEDUSA", e:"🪼"}, {w:"BICICLETA", e:"🚲"}, {w:"HELICÒPTER", e:"🚁"}, {w:"DINOSAURE", e:"🦕"},
+                    {w:"RATPENAT", e:"🦇"}, {w:"CAMALEÓ", e:"🦎"}, {w:"TRACTOR", e:"🚜"}, {w:"MARTELL", e:"🔨"},
+                    {w:"TELÈFON", e:"☎️"}, {w:"ORDINADOR", e:"💻"}, {w:"ESPORTIVES", e:"👟"}, {w:"GIRASOL", e:"🌻"},
+                    {w:"PARAIGUA", e:"☂️"}, {w:"PASTÍS", e:"🎂"}, {w:"XOCOLATA", e:"🍫"}, {w:"BOCATA", e:"🥪"},
+                    {w:"MADUIXA", e:"🍓"}, {w:"ASTRONAUTA", e:"👨‍🚀"}, {w:"HOSPITAL", e:"🏥"}, {w:"BOMBERS", e:"🚒"},
+                    {w:"POLICIA", e:"🚓"}, {w:"BIBLIOTECA", e:"📚"}, {w:"AQUARI", e:"🐠"}, {w:"CIENTÍFIC", e:"🔬"}
                 ]
             }
         };
 
-        const LANG_FLAGS = { es: "🇪🇸", en: "🇬🇧", va: "👑", ca: "💛" };
-        const LANG_CODES_TTS = { es: 'es-ES', en: 'en-US', va: 'ca-ES', ca: 'ca-ES' };
-
-        /* ================= GAME STATE ================= */
-        let currentLang = 'es';
-        let currentLevel = 1;
-        let gameWords = [];
-        let wordIndex = 0;
-        let currentWordObj = null;
-        let targetWord = "";
-        let collectedLetters = [];
-        let score = 0;
-        let isMuted = false;
-        let gameActive = false;
-        let activeBubbles = [];
-        let animationFrameId = null;
-        let lastSpawnTime = 0;
-
-        /* Audio Synth Context */
-        let audioCtx = null;
-
-        function getAudioContext() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            return audioCtx;
+        // Cambiar idioma seleccionado
+        function setLanguage(lang, btnElement) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
+            btnElement.classList.add('selected');
         }
 
-        /* ================= SOUND EFFECTS ================= */
-        function playSound(type) {
-            if (isMuted) return;
-            try {
-                const ctx = getAudioContext();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-
-                const now = ctx.currentTime;
-
-                if (type === 'correct') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now); // C5
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-                    gain.gain.setValueAtTime(0.3, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                    osc.start(now);
-                    osc.stop(now + 0.2);
-                } else if (type === 'error') {
-                    // Car Horn sound
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(140, now);
-                    osc.frequency.setValueAtTime(175, now + 0.1);
-                    gain.gain.setValueAtTime(0.4, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
-                } else if (type === 'fanfare') {
-                    const notes = [440, 554.37, 659.25, 880];
-                    notes.forEach((freq, idx) => {
-                        const noteOsc = ctx.createOscillator();
-                        const noteGain = ctx.createGain();
-                        noteOsc.type = 'triangle';
-                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.12);
-                        noteGain.gain.setValueAtTime(0.3, now + idx * 0.12);
-                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
-                        noteOsc.connect(noteGain);
-                        noteGain.connect(ctx.destination);
-                        noteOsc.start(now + idx * 0.12);
-                        noteOsc.stop(now + idx * 0.12 + 0.3);
-                    });
-                }
-            } catch (e) {
-                console.log("Audio play error", e);
-            }
-        }
-
-        /* ================= TEXT TO SPEECH ================= */
+        // Sintetizador de voz
         function speakWord(text) {
-            if (isMuted || !('speechSynthesis' in window)) return;
-            try {
+            if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = LANG_CODES_TTS[currentLang] || 'es-ES';
-                utterance.rate = 0.85;
-                utterance.pitch = 1.1;
+                let utterance = new SpeechSynthesisUtterance(text);
+                let langCode = 'es-ES';
+                if (currentLang === 'en') langCode = 'en-US';
+                if (currentLang === 'va' || currentLang === 'ca') langCode = 'ca-ES';
+                utterance.lang = langCode;
+                utterance.rate = 0.8; // Más lento para niños
                 window.speechSynthesis.speak(utterance);
-            } catch (e) {
-                console.log("TTS error", e);
             }
         }
 
-        function repeatSpeech() {
-            if (targetWord) speakWord(targetWord);
-        }
-
-        /* ================= UI NAVIGATION ================= */
-        function selectLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('currentLangFlag').innerText = LANG_FLAGS[lang];
-            showScreen('screenLevel');
-            updateLevelLabels();
-        }
-
-        function openLangModal() {
-            document.getElementById('langModal').classList.remove('hidden');
-        }
-
-        function closeLangModal() {
-            document.getElementById('langModal').classList.add('hidden');
-        }
-
-        function changeLanguageAndClose(lang) {
-            currentLang = lang;
-            document.getElementById('currentLangFlag').innerText = LANG_FLAGS[lang];
-            closeLangModal();
-            if (gameActive) {
-                startGame(currentLevel);
-            } else {
-                updateLevelLabels();
+        function speakCurrentWord() {
+            if (currentWordData) {
+                speakWord(currentWordData.w);
             }
         }
 
-        function updateLevelLabels() {
-            const translations = {
-                es: ["Nivel 1: Cortas", "Nivel 2: Medias", "Nivel 3: Largas"],
-                en: ["Level 1: Short", "Level 2: Medium", "Level 3: Long"],
-                va: ["Nivell 1: Curtetes", "Nivell 2: Mitjanes", "Nivell 3: Llargues"],
-                ca: ["Nivell 1: Curtetes", "Nivell 2: Mitjanes", "Nivell 3: Llargues"]
-            };
+        // Efectos de Sonido con AudioContext (sin archivos externos)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSuccessSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let now = audioCtx.currentTime;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, now); // A4
+            osc.frequency.setValueAtTime(554.37, now + 0.1); // C#5
+            osc.frequency.setValueAtTime(659.25, now + 0.2); // E5
+            osc.frequency.setValueAtTime(880, now + 0.3); // A5
 
-            document.getElementById('lvl1Title').innerText = translations[currentLang][0];
-            document.getElementById('lvl2Title').innerText = translations[currentLang][1];
-            document.getElementById('lvl3Title').innerText = translations[currentLang][2];
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+            osc.start(now);
+            osc.stop(now + 0.6);
         }
 
-        function showScreen(screenId) {
-            ['screenLanguage', 'screenLevel', 'screenGame'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(screenId).classList.remove('hidden');
+        function playErrorSound() {
+            // Sonido tipo claxon o error grave
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let now = audioCtx.currentTime;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.setValueAtTime(110, now + 0.15);
+
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+            osc.start(now);
+            osc.stop(now + 0.35);
+        }
+
+        // Iniciar Juego
+        function startGame(level) {
+            currentLevel = level;
+            currentWordIndex = 0;
+            
+            // Seleccionar 10 palabras aleatorias de la inmensa lista de ese nivel e idioma
+            let levelPool = [...DATABASE[currentLang][level]];
+            // Barajar aleatoriamente
+            levelPool.sort(() => Math.random() - 0.5);
+            // Tomar 10 para la partida actual
+            activeWords = levelPool.slice(0, 10);
+
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            
+            const levelNames = {1: "Nivel 1 (Cortas)", 2: "Nivel 2 (Medias)", 3: "Nivel 3 (Largas)"};
+            document.getElementById('level-display').innerText = levelNames[level];
+
+            loadNextWord();
+            startLoop();
         }
 
         function goToHome() {
             stopGame();
-            showScreen('screenLanguage');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('home-screen').classList.remove('hidden');
         }
 
-        function goToLevelSelect() {
-            stopGame();
-            document.getElementById('victoryModal').classList.add('hidden');
-            showScreen('screenLevel');
+        function stopGame() {
+            isGameActive = false;
+            clearInterval(gameInterval);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            document.getElementById('play-area').innerHTML = '';
         }
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            const soundIcon = document.getElementById('soundIcon');
-            soundIcon.className = isMuted ? "fa-solid fa-volume-xmark text-red-500" : "fa-solid fa-volume-high";
-        }
-
-        /* ================= GAMEPLAY ENGINE ================= */
-        function startGame(level) {
-            getAudioContext();
-            currentLevel = level;
-            wordIndex = 0;
-            score = 0;
-            document.getElementById('scoreText').innerText = score;
-
-            const lvlKey = `level${level}`;
-            const availableWords = [...WORD_DATABASE[currentLang][lvlKey]];
-            gameWords = shuffleArray(availableWords).slice(0, 5);
-
-            showScreen('screenGame');
-            loadWord();
-        }
-
-        function loadWord() {
-            if (wordIndex >= gameWords.length) {
-                endRoundVictory();
+        // Cargar palabra siguiente
+        function loadNextWord() {
+            if (currentWordIndex >= activeWords.length) {
+                showFullCelebration();
                 return;
             }
 
-            clearFallingBubbles();
+            currentWordData = activeWords[currentWordIndex];
+            currentSlotIndex = 0;
+            activeLetters = [];
 
-            currentWordObj = gameWords[wordIndex];
-            targetWord = currentWordObj.word.toUpperCase().replace(/[^A-Z]/g, '');
-            collectedLetters = [];
+            document.getElementById('word-counter').innerText = `Palabra: ${currentWordIndex + 1} / 10`;
+            document.getElementById('item-emoji').innerText = currentWordData.e;
 
-            document.getElementById('wordEmoji').innerText = currentWordObj.emoji;
-            document.getElementById('wordHintText').innerText = targetWord;
-            document.getElementById('wordProgressText').innerText = `Palabra ${wordIndex + 1} de ${gameWords.length}`;
-            document.getElementById('progressBar').style.width = `${((wordIndex) / gameWords.length) * 100}%`;
-
-            // Build Slots
-            const slotsContainer = document.getElementById('slotsContainer');
+            // Crear huecos visuales
+            const slotsContainer = document.getElementById('word-slots');
             slotsContainer.innerHTML = '';
-            for (let i = 0; i < targetWord.length; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'letter-slot';
+            for (let i = 0; i < currentWordData.w.length; i++) {
+                let slot = document.createElement('div');
+                slot.className = 'slot';
                 slot.id = `slot-${i}`;
                 slotsContainer.appendChild(slot);
             }
 
-            // Build Quick Keypad for alternative input
-            buildQuickKeypad();
+            // Crear teclado auxiliar inferior rápido
+            buildKeyboardHelper();
 
-            speakWord(targetWord);
-
-            gameActive = true;
-            lastSpawnTime = Date.now();
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            gameLoop();
+            // Pronunciar palabra
+            setTimeout(() => speakCurrentWord(), 400);
         }
 
-        function buildQuickKeypad() {
-            const keypad = document.getElementById('quickKeypad');
-            keypad.innerHTML = '';
-            
-            // Unique letters from target + random extra letters
-            const targetChars = Array.from(new Set(targetWord.split('')));
-            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            while (targetChars.length < Math.min(8, targetWord.length + 4)) {
-                const randChar = alphabet[Math.floor(Math.random() * alphabet.length)];
-                if (!targetChars.includes(randChar)) targetChars.push(randChar);
-            }
-            shuffleArray(targetChars);
-
-            targetChars.forEach(char => {
-                const btn = document.createElement('button');
-                btn.className = 'key-btn px-3 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-800 active:scale-90';
+        // Crear teclado en pantalla para apoyo táctil
+        function buildKeyboardHelper() {
+            const kb = document.getElementById('keyboard-helper');
+            kb.innerHTML = '';
+            // Letras aleatorias o abecedario completo simplificado
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÍÒÓÚÇ';
+            for (let char of alphabet) {
+                let btn = document.createElement('button');
+                btn.className = 'key-btn';
                 btn.innerText = char;
-                btn.onclick = () => catchLetter(char);
-                keypad.appendChild(btn);
-            });
+                btn.onclick = () => handleLetterSelection(char);
+                kb.appendChild(btn);
+            }
         }
 
-        function spawnFallingBubble() {
-            const area = document.getElementById('fallingArea');
-            if (!area) return;
-
-            const neededLetters = targetWord.split('').filter((char, idx) => collectedLetters[idx] !== char);
-            let letterToAssign = '';
-
-            if (neededLetters.length > 0 && Math.random() < 0.65) {
-                letterToAssign = neededLetters[Math.floor(Math.random() * neededLetters.length)];
-            } else {
-                const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                letterToAssign = alphabet[Math.floor(Math.random() * alphabet.length)];
-            }
-
-            const bubble = document.createElement('div');
-            bubble.className = 'letter-bubble';
-            bubble.innerText = letterToAssign;
-
-            // Positioning
-            const areaWidth = window.innerWidth;
-            const bubbleWidth = window.innerWidth > 640 ? 76 : 64;
-            const randomX = Math.max(10, Math.floor(Math.random() * (areaWidth - bubbleWidth - 20)));
+        // Lógica de bucle de letras cayendo
+        function startLoop() {
+            isGameActive = true;
+            let playArea = document.getElementById('play-area');
             
-            bubble.style.left = `${randomX}px`;
-            bubble.style.top = `-80px`;
+            // Intervalo para generar nuevas letras flotando
+            gameInterval = setInterval(() => {
+                if (!isGameActive) return;
+                spawnFallingLetter();
+            }, 1200);
 
-            const colors = ['#FFD166', '#EF476F', '#06D6A0', '#118AB2', '#8338EC'];
-            bubble.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            // Bucle de animación por fotograma
+            function animate() {
+                if (!isGameActive) return;
+                
+                let letters = playArea.getElementsByClassName('falling-letter');
+                let areaHeight = playArea.clientHeight;
 
-            // Multi-event click handler
-            const triggerCatch = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                catchLetter(letterToAssign, bubble);
-            };
-
-            bubble.addEventListener('pointerdown', triggerCatch);
-            bubble.addEventListener('click', triggerCatch);
-
-            area.appendChild(bubble);
-
-            activeBubbles.push({
-                element: bubble,
-                y: -80,
-                speed: 1.5 + (currentLevel * 0.4) + Math.random() * 0.8,
-                letter: letterToAssign
-            });
-        }
-
-        function gameLoop() {
-            if (!gameActive) return;
-
-            const now = Date.now();
-            // Spawn bubble periodically
-            const spawnInterval = Math.max(800, 1600 - (currentLevel * 200));
-            if (now - lastSpawnTime > spawnInterval) {
-                spawnFallingBubble();
-                lastSpawnTime = now;
-            }
-
-            // Move existing bubbles
-            const screenHeight = window.innerHeight;
-            for (let i = activeBubbles.length - 1; i >= 0; i--) {
-                const b = activeBubbles[i];
-                b.y += b.speed;
-                b.element.style.top = `${b.y}px`;
-
-                // Remove when fallen off screen
-                if (b.y > screenHeight - 120) {
-                    if (b.element.parentElement) b.element.remove();
-                    activeBubbles.splice(i, 1);
+                for (let i = letters.length - 1; i >= 0; i--) {
+                    let el = letters[i];
+                    let y = parseFloat(el.dataset.y) + parseFloat(el.dataset.speed);
+                    
+                    if (y > areaHeight - 60) {
+                        el.remove(); // Si llega abajo del todo desaparece
+                    } else {
+                        el.dataset.y = y;
+                        el.style.top = y + 'px';
+                    }
                 }
-            }
 
-            animationFrameId = requestAnimationFrame(gameLoop);
+                animationFrameId = requestAnimationFrame(animate);
+            }
+            animate();
         }
 
-        function catchLetter(letter, bubbleElem = null) {
-            if (!gameActive) return;
+        // Generar burbuja de letra aleatoria
+        function spawnFallingLetter() {
+            let playArea = document.getElementById('play-area');
+            if (!playArea) return;
 
-            const expectedIdx = collectedLetters.length;
-            const expectedLetter = targetWord[expectedIdx];
+            let targetWord = currentWordData.w;
+            let expectedChar = targetWord[currentSlotIndex];
 
-            if (letter === expectedLetter) {
-                // Correct
-                playSound('correct');
-                collectedLetters.push(letter);
+            // 40% de probabilidad de que sea la letra correcta que necesita, 60% letra trampa
+            let charToSpawn = '';
+            if (Math.random() < 0.4 && expectedChar) {
+                charToSpawn = expectedChar;
+            } else {
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                charToSpawn = alphabet[Math.floor(Math.random() * alphabet.length)];
+            }
 
-                const slot = document.getElementById(`slot-${expectedIdx}`);
+            let el = document.createElement('div');
+            el.className = 'falling-letter';
+            el.innerText = charToSpawn;
+
+            let maxX = playArea.clientWidth - 60;
+            let startX = Math.max(10, Math.random() * maxX);
+            
+            el.style.left = startX + 'px';
+            el.style.top = '-60px';
+            el.dataset.y = -60;
+            // Velocidad adaptada suave
+            el.dataset.speed = 1.2 + (currentLevel * 0.4) + (Math.random() * 0.8);
+
+            // Evento al tocar la letra flotante
+            el.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                handleLetterSelection(charToSpawn, el);
+            });
+
+            playArea.appendChild(el);
+        }
+
+        // Validar si la letra seleccionada es correcta
+        function handleLetterSelection(selectedChar, element = null) {
+            if (!isGameActive || !currentWordData) return;
+
+            let targetWord = currentWordData.w;
+            let expectedChar = targetWord[currentSlotIndex];
+
+            if (selectedChar === expectedChar) {
+                // ¡ACIERTO!
+                playSuccessSound();
+                let slot = document.getElementById(`slot-${currentSlotIndex}`);
                 if (slot) {
-                    slot.innerText = letter;
+                    slot.innerText = selectedChar;
                     slot.classList.add('filled');
                 }
 
-                score += 10;
-                document.getElementById('scoreText').innerText = score;
+                if (element) element.remove();
 
-                if (bubbleElem) {
-                    bubbleElem.style.transform = 'scale(1.4)';
-                    bubbleElem.style.opacity = '0';
-                    setTimeout(() => {
-                        if (bubbleElem.parentElement) bubbleElem.remove();
-                    }, 150);
-                }
+                currentSlotIndex++;
 
-                // Complete word?
-                if (collectedLetters.length === targetWord.length) {
-                    onWordCompleted();
+                // ¿Completó la palabra?
+                if (currentSlotIndex >= targetWord.length) {
+                    playSuccessSound();
+                    showWordCelebration();
                 }
             } else {
-                // Error Claxon
-                playSound('error');
-
-                if (bubbleElem) {
-                    bubbleElem.style.backgroundColor = '#ef4444';
-                    bubbleElem.style.transform = 'scale(0.85)';
-                    setTimeout(() => {
-                        if (bubbleElem.parentElement) bubbleElem.remove();
-                    }, 200);
+                // ¡FALLO! (Claxon o error)
+                playErrorSound();
+                if (element) {
+                    element.style.borderColor = '#FF5252';
+                    element.style.background = '#ffebee';
+                    setTimeout(() => { if(element) element.remove(); }, 300);
                 }
             }
         }
 
-        function onWordCompleted() {
-            gameActive = false;
-            playSound('fanfare');
+        // Celebración por palabra completada
+        function showWordCelebration() {
+            isGameActive = false;
+            clearInterval(gameInterval);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-            if (window.confetti) {
-                confetti({
-                    particleCount: 80,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
-            }
+            let playArea = document.getElementById('play-area');
+            playArea.innerHTML = '';
+
+            // Mostrar fuegos artificiales visuales
+            createFireworksEffect();
 
             setTimeout(() => {
-                wordIndex++;
-                loadWord();
-            }, 1600);
+                currentWordIndex++;
+                isGameActive = true;
+                loadNextWord();
+                startLoop();
+            }, 2200);
         }
 
-        function endRoundVictory() {
+        // Celebración final al completar los 10 juegos
+        function showFullCelebration() {
             stopGame();
-            playSound('fanfare');
-            triggerFireworks();
-
-            document.getElementById('finalScore').innerText = score;
-            document.getElementById('victoryModal').classList.remove('hidden');
+            let gameScreen = document.getElementById('game-screen');
+            
+            let overlay = document.createElement('div');
+            overlay.className = 'celebration-overlay';
+            overlay.innerHTML = `
+                <div class="celebration-box">
+                    <div class="celebration-title">🎉 ¡ENHORABUENA! 🎉</div>
+                    <p style="font-size: 1.3rem; margin-bottom: 20px;">¡Has completado todos los retos de este nivel como un campeón!</p>
+                    <button class="btn btn-nivel-1" onclick="location.reload()">Jugar de Nuevo</button>
+                </div>
+            `;
+            gameScreen.appendChild(overlay);
+            createFireworksEffect();
         }
 
-        function replayGame() {
-            document.getElementById('victoryModal').classList.add('hidden');
-            startGame(currentLevel);
-        }
-
-        function clearFallingBubbles() {
-            activeBubbles.forEach(b => {
-                if (b.element && b.element.parentElement) b.element.remove();
-            });
-            activeBubbles = [];
-            const area = document.getElementById('fallingArea');
-            if (area) area.innerHTML = '';
-        }
-
-        function stopGame() {
-            gameActive = false;
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            clearFallingBubbles();
-        }
-
-        /* ================= PHYSICAL KEYBOARD LISTENER ================= */
-        window.addEventListener('keydown', (e) => {
-            if (!gameActive) return;
-            const key = e.key.toUpperCase();
-            if (key.length === 1 && key >= 'A' && key <= 'Z') {
-                catchLetter(key);
+        // Efectos visuales de fuegos artificiales
+        function createFireworksEffect() {
+            let container = document.getElementById('game-screen');
+            for (let i = 0; i < 25; i++) {
+                let fw = document.createElement('div');
+                fw.className = 'firework';
+                fw.style.left = (Math.random() * 80 + 10) + '%';
+                fw.style.top = (Math.random() * 60 + 20) + '%';
+                let colors = ['#ff5252', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0'];
+                fw.style.background = colors[Math.floor(Math.random() * colors.length)];
+                container.appendChild(fw);
+                setTimeout(() => fw.remove(), 1000);
             }
-        });
-
-        /* ================= UTILS & FIREWORKS ================= */
-        function shuffleArray(arr) {
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
         }
-
-        function triggerFireworks() {
-            if (!window.confetti) return;
-            const duration = 2 * 1000;
-            const animationEnd = Date.now() + duration;
-
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                const particleCount = 40 * (timeLeft / duration);
-                confetti({ particleCount, startVelocity: 30, spread: 360, origin: { x: Math.random(), y: Math.random() - 0.2 } });
-            }, 250);
-        }
-
-        window.onload = function() {
-            showScreen('screenLanguage');
-        };
     </script>
 </body>
 </html>
